@@ -1,0 +1,9 @@
+[package]
+name = "Omnia"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rustring_builder = "0.2.0"
+num-traits = "0.2.19"
+downcast-rs = "1.2.1"

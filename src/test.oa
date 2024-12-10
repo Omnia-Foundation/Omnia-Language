@@ -1,0 +1,9 @@
+plug std::console.println;
+
+static func main(&str[] args) {
+    decimal val1 = 12.3;
+    decimal val2 = 0.7;
+    println(val1 + val2);
+}
+
+//commentariy yomayo

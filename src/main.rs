@@ -2,8 +2,8 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::Read;
 use std::process::exit;
-use crate::core::omnia_types::omnia_types::{OmniaInt16, OmniaByte, OmniaValue, Type};
-use crate::core::omnia_types::omnia_types::Type::{ANYNUM, INT16};
+use crate::core::omnia_types::omnia_types::{OmniaByte, OmniaValue, Type};
+use crate::core::omnia_types::omnia_types::Type::{ANYNUM};
 use crate::lexer::lexer::Lexer;
 
 mod lexer;

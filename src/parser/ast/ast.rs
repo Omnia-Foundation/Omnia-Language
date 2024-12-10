@@ -1,7 +1,7 @@
 use std::any::Any;
 use std::cmp::PartialEq;
-use std::ops::{Add, Deref};
-use num_traits::Float;
+use std::ops::{Add, Deref, Sub};
+use num_traits::{Float, Num};
 use num_traits::float::FloatCore;
 use crate::core::omnia_types::omnia_types::{OmniaByte, OmniaChar, OmniaDecimal, OmniaInt, OmniaLong, OmniaString, OmniaUByte, OmniaUInt, OmniaULong, OmniaValue};
 use crate::core::omnia_types::omnia_types::Type;
@@ -38,10 +38,10 @@ impl Node for BinaryExpression {}
 
 
 impl BinaryExpression {
-    fn new(left: impl Expression, right: impl Expression, operator: Operator) -> BinaryExpression {
+    fn new(mut left: impl Expression, mut right: impl Expression, operator: Operator) -> BinaryExpression {
         Self {
-            left,
-            right,
+            left: &mut left,
+            right: &mut right,
             operator
         }
     }
@@ -64,7 +64,7 @@ impl BinaryExpression {
                 self.prepare_calc_int(l, &OmniaInt::get_from(r.downcast_ref::<OmniaLong>().unwrap().get_value_as::<i64>()))
             }
             Type::DECIMAL => {
-                self.prepare_calc_int(l, &OmniaInt::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>()))
+                self.prepare_calc_int(l, &OmniaInt::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>() as i32))
             }
             Type::STRING => {
                 self.append_int_to_string(l, r.downcast_ref::<OmniaString>().unwrap())
@@ -165,7 +165,7 @@ impl BinaryExpression {
                 self.prepare_calc_byte(l, &OmniaByte::get_from::<i8>(r.downcast_ref::<OmniaLong>().unwrap().get_value_as::<i64>().try_into().unwrap()))
             }
             Type::DECIMAL => {
-                self.prepare_calc_byte(l, &OmniaByte::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>()))
+                self.prepare_calc_byte(l, &OmniaByte::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>() as i8))
             }
             Type::STRING => {
                 self.append_byte_to_string(l, r.downcast_ref::<OmniaString>().unwrap())
@@ -256,13 +256,13 @@ impl BinaryExpression {
         let r_type = binding.get_right();
         match r_type {
             Type::BYTE => {
-                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaByte>().unwrap().get_value_as()))
+                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaByte>().unwrap().get_value_as::<i8>()))
             }
             Type::INT => {
-                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_value_as()))
+                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_value_as::<i32>()))
             }
             Type::DECIMAL => {
-                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>()))
+                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>() as i64))
             }
             Type::LONG => {
                 self.prepare_calc_long(l, r.downcast_ref::<OmniaLong>().unwrap())
@@ -366,7 +366,7 @@ impl BinaryExpression {
                 self.append_uint_to_string(l, r.downcast_ref::<OmniaString>().unwrap())
             }
             Type::DECIMAL => {
-                self.prepare_calc_uint(l, &OmniaUInt::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>()))
+                self.prepare_calc_uint(l, &OmniaUInt::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>() as u32))
             }
             _ => {
                 panic!("Unexpected or currently unsupported type {:?}", r_type)
@@ -467,7 +467,7 @@ impl BinaryExpression {
                 self.append_ubyte_to_string(l, r.downcast_ref::<OmniaString>().unwrap())
             }
             Type::DECIMAL => {
-                self.prepare_calc_ubyte(l, &OmniaUByte::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>()))
+                self.prepare_calc_ubyte(l, &OmniaUByte::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>() as u8))
             }
             _ => {
                 panic!("Unexpected or currently unsupported type {:?}", r_type)
@@ -554,10 +554,10 @@ impl BinaryExpression {
         let r_type = binding.get_right();
         match r_type {
             Type::UBYTE => {
-                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUByte>().unwrap().get_value_as()))
+                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUByte>().unwrap().get_value_as::<u8>()))
             }
             Type::UINT => {
-                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as()))
+                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as::<u32>()))
             }
             Type::ULONG => {
                 self.prepare_calc_ulong(l, r.downcast_ref::<OmniaULong>().unwrap())
@@ -702,10 +702,10 @@ impl BinaryExpression {
                 self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_as_float32()))
             }
             Type::UINT => {
-                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as()))
+                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as::<u32>()))
             }
             Type::LONG => {
-                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaLong>().unwrap().get_value_as()))
+                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaLong>().unwrap().get_value_as::<i64>() as f64))
             }
             Type::DECIMAL => {
                 self.prepare_calc_decimal(l, r.downcast_ref::<OmniaDecimal>().unwrap())
@@ -793,6 +793,28 @@ pub trait CheckerF64 {
     fn checked_div(&self, b: f64) -> Option<f64>;
     fn checked_rem(&self, b: f64) -> Option<f64>;
 }
+pub trait CheckedIncDec {
+    fn checked_inc(&self) -> Option<impl Add>;
+    fn checked_dec(&self) -> Option<impl Sub>;
+}
+
+impl CheckedIncDec for i8 {
+    fn checked_inc(&self) -> Option<i8> {
+        if let Some(c) = self.checked_add(1i8) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<i8> {
+        if let Some(c) = self.checked_sub(1i8) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+
 impl CheckerF64 for f64 {
     fn checked_add(&self, b: f64) -> Option<f64> {
         let result = self + b;
@@ -916,10 +938,37 @@ pub struct UnaryExpression {
     operation: Operator
 }
 impl UnaryExpression {
-    fn new(left: impl Expression, operation: Operator) -> UnaryExpression {
+    fn new(mut left: impl Expression, operation: Operator) -> UnaryExpression {
         Self {
-            left,
+            left: &mut left,
             operation
+        }
+    }
+    fn prepare_calc_byte(&self, val: &OmniaByte) -> Box<dyn OmniaValue> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_byte(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_byte(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
+    fn inc_byte(&self, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = val.get_value_as::<i8>().checked_inc() {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while incrementing!")
+        }
+    }
+    fn dec_byte(&self, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = val.get_value_as::<i8>().checked_dec() {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while decrementing!")
         }
     }
 
@@ -927,6 +976,17 @@ impl UnaryExpression {
 impl Node for UnaryExpression {}
 impl Expression for UnaryExpression {
     fn calc(&mut self) -> Box<dyn OmniaValue>{
-        todo!()
+        let mut value = self.left.calc();
+        let binding = value.get_type();
+        let v_type = binding.get_right();
+        match v_type {
+            Type::BYTE => {
+                self.prepare_calc_byte(value.downcast_ref::<OmniaByte>().unwrap())
+            }
+
+            _ => {
+                panic!("Unexpected or unsupported type {:?}", v_type)
+            }
+        }
     }
 }

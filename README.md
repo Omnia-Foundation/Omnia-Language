@@ -1,6 +1,6 @@
 # The Omnia Language
 ***
-![Logo](https://i.yapx.ru/YQOD8.png "Omnia lang logo")
+![Logo](https://github.com/user-attachments/assets/d33b21a8-f273-429d-8b75-d1d17da10d36 "Omnia lang logo")
 
 ! **Work in progress** !
 

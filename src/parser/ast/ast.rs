@@ -28,8 +28,8 @@ pub enum Operator{
     DEC
 }
 pub struct BinaryExpression {
-    left: &'static mut dyn Expression,
-    right: &'static mut dyn Expression,
+    left: Box<dyn Expression>,
+    right: Box<dyn Expression>,
     operator: Operator
 }
 
@@ -38,10 +38,10 @@ impl Node for BinaryExpression {}
 
 
 impl BinaryExpression {
-    fn new(mut left: impl Expression, mut right: impl Expression, operator: Operator) -> BinaryExpression {
+    fn new(mut left: Box<dyn Expression>, mut right: Box<dyn Expression>, operator: Operator) -> BinaryExpression {
         Self {
-            left: &mut left,
-            right: &mut right,
+            left,
+            right,
             operator
         }
     }
@@ -49,7 +49,7 @@ impl BinaryExpression {
 
     //SECTION:: Int preparing start
 
-    fn prepare_calc_l_int(&self, l: &OmniaInt) -> Box<dyn OmniaValue> {
+    fn prepare_calc_l_int(&mut self, l: &OmniaInt) -> Box<dyn OmniaValue> {
         let mut r = self.right.calc();
         let binding = r.get_type();
         let r_type = binding.get_right();
@@ -250,16 +250,16 @@ impl BinaryExpression {
 
     //SECTION:: Longs start
 
-    fn prepare_calc_l_long(&self, l: &OmniaLong) -> Box<dyn OmniaValue> {
+    fn prepare_calc_l_long(&mut self, l: &OmniaLong) -> Box<dyn OmniaValue> {
         let mut r = self.right.calc();
         let binding = r.get_type();
         let r_type = binding.get_right();
         match r_type {
             Type::BYTE => {
-                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaByte>().unwrap().get_value_as::<i8>()))
+                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaByte>().unwrap().get_value_as::<i8>() as i64))
             }
             Type::INT => {
-                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_value_as::<i32>()))
+                self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_value_as::<i32>() as i64))
             }
             Type::DECIMAL => {
                 self.prepare_calc_long(l, &OmniaLong::get_from(r.downcast_ref::<OmniaDecimal>().unwrap().get_value_as::<f64>() as i64))
@@ -348,7 +348,7 @@ impl BinaryExpression {
 
     //SECTION:: UInt preparing start
 
-    fn prepare_calc_l_uint(&self, l: &OmniaUInt) -> Box<dyn OmniaValue> {
+    fn prepare_calc_l_uint(&mut self, l: &OmniaUInt) -> Box<dyn OmniaValue> {
         let mut r = self.right.calc();
         let binding = r.get_type();
         let r_type = binding.get_right();
@@ -548,16 +548,16 @@ impl BinaryExpression {
 
     //SECTION:: ULongs start
 
-    fn prepare_calc_l_ulong(&self, l: &OmniaULong) -> Box<dyn OmniaValue> {
+    fn prepare_calc_l_ulong(&mut self, l: &OmniaULong) -> Box<dyn OmniaValue> {
         let mut r = self.right.calc();
         let binding = r.get_type();
         let r_type = binding.get_right();
         match r_type {
             Type::UBYTE => {
-                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUByte>().unwrap().get_value_as::<u8>()))
+                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUByte>().unwrap().get_value_as::<u8>() as u64))
             }
             Type::UINT => {
-                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as::<u32>()))
+                self.prepare_calc_ulong(l, &OmniaULong::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as::<u32>() as u64))
             }
             Type::ULONG => {
                 self.prepare_calc_ulong(l, r.downcast_ref::<OmniaULong>().unwrap())
@@ -640,7 +640,7 @@ impl BinaryExpression {
 
     //SECTION:: Strings start
 
-    fn prepare_calc_l_string(&self, l: &OmniaString) -> Box<OmniaString> {
+    fn prepare_calc_l_string(&mut self, l: &OmniaString) -> Box<OmniaString> {
         let mut r = self.right.calc();
         let binding = r.get_type();
         let r_type = binding.get_right();
@@ -687,22 +687,22 @@ impl BinaryExpression {
 
     //SECTION:: Decimals start
 
-    fn prepare_calc_l_decimal(&self, l: &OmniaDecimal) -> Box<dyn OmniaValue> {
+    fn prepare_calc_l_decimal(&mut self, l: &OmniaDecimal) -> Box<dyn OmniaValue> {
         let mut r = self.right.calc();
         let binding = r.get_type();
         let r_type = binding.get_right();
         match r_type {
             Type::BYTE => {
-                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaByte>().unwrap().get_as_float32()))
+                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaByte>().unwrap().get_as_float32() as f64))
             }
             Type::UBYTE => {
-                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaUByte>().unwrap().get_as_float32()))
+                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaUByte>().unwrap().get_as_float32() as f64))
             }
             Type::INT => {
-                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_as_float32()))
+                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaInt>().unwrap().get_as_float32() as f64))
             }
             Type::UINT => {
-                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as::<u32>()))
+                self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaUInt>().unwrap().get_value_as::<u32>() as f64))
             }
             Type::LONG => {
                 self.prepare_calc_decimal(l, &OmniaDecimal::get_from(r.downcast_ref::<OmniaLong>().unwrap().get_value_as::<i64>() as f64))
@@ -808,6 +808,22 @@ impl CheckedIncDec for i8 {
     }
     fn checked_dec(&self) -> Option<i8> {
         if let Some(c) = self.checked_sub(1i8) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+impl CheckedIncDec for u8 {
+    fn checked_inc(&self) -> Option<impl Add> {
+        if let Some(c) = self.checked_add(1u8) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<impl Sub> {
+        if let Some(c) = self.checked_sub(1u8) {
             Some(c)
         } else {
             None
@@ -934,13 +950,13 @@ impl Expression for BinaryExpression {
     }
 }
 pub struct UnaryExpression {
-    left: &'static mut dyn Expression,
+    left: Box<dyn Expression>,
     operation: Operator
 }
 impl UnaryExpression {
-    fn new(mut left: impl Expression, operation: Operator) -> UnaryExpression {
+    fn new(mut left: Box<dyn Expression>, operation: Operator) -> UnaryExpression {
         Self {
-            left: &mut left,
+            left,
             operation
         }
     }
@@ -971,6 +987,19 @@ impl UnaryExpression {
             panic!("Got value which is more or less than byte bounds while decrementing!")
         }
     }
+    fn prepare_calc_ubyte(&self, val: &OmniaUByte) -> Box<OmniaUByte> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_ubyte(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_ubyte(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
 
 }
 impl Node for UnaryExpression {}
@@ -982,6 +1011,24 @@ impl Expression for UnaryExpression {
         match v_type {
             Type::BYTE => {
                 self.prepare_calc_byte(value.downcast_ref::<OmniaByte>().unwrap())
+            }
+            Type::UBYTE => {
+                self.prepare_calc_ubyte(value.downcast_ref::<OmniaUByte>().unwrap())
+            }
+            Type::INT => {
+                self.prepare_calc_int(value.downcast_ref::<OmniaInt>().unwrap())
+            }
+            Type::UINT => {
+                self.prepare_calc_uint(value.downcast_ref::<OmniaUInt>().unwrap())
+            }
+            Type::LONG => {
+                self.prepare_calc_long(value.downcast_ref::<OmniaLong>().unwrap())
+            }
+            Type::ULONG => {
+                self.prepare_calc_ulong(value.downcast_ref::<OmniaULong>().unwrap())
+            }
+            Type::DECIMAL => {
+                self.prepare_calc_decimal(value.downcast_ref::<OmniaDecimal>().unwrap())
             }
 
             _ => {

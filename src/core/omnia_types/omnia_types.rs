@@ -77,11 +77,11 @@ impl OmniaDecimal {
         T::from(self.value)
     }
 
-    pub(crate) fn get_from<T>(value: T) -> OmniaDecimal where T : TryInto<f64> + PartialOrd, <T as TryInto<f64>>::Error : Debug{
-        if value < f64::MIN {
+    pub(crate) fn get_from<T>(value: T) -> OmniaDecimal where T : TryInto<f64> + From<f64> + PartialOrd, <T as TryInto<f64>>::Error : Debug{
+        if value < f64::MIN.into() {
             return OmniaDecimal::new(f64::MIN)
         }
-        if value > f64::MAX {
+        if value > f64::MAX.into() {
             return OmniaDecimal::new(f64::MAX)
         }
         OmniaDecimal::new(value.try_into().unwrap())
@@ -124,7 +124,7 @@ impl OmniaChar {
         T::from(self.value)
     }
 
-    pub(crate) fn get_from<T>(value: T) -> OmniaChar where T : TryInto<char> + PartialOrd, <T as TryInto<char>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaChar where T : TryInto<char> + From<char> + PartialOrd, <T as TryInto<char>>::Error: Debug {
         if value > char::MAX.into() {
             return OmniaChar::new(char::MAX)
         }
@@ -169,7 +169,7 @@ impl OmniaString {
         T::from(self.value.clone())
     }
 
-    pub(crate) fn get_from<T>(value: T) -> OmniaString where T : TryInto<String> + PartialOrd, <T as TryInto<String>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaString where T : TryInto<String> + From<String> + PartialOrd, <T as TryInto<String>>::Error: Debug {
         OmniaString::new(value.try_into().expect("Given value is not a string"))
     }
 }
@@ -212,7 +212,7 @@ impl OmniaBool {
         T::from(self.value)
     }
 
-    pub(crate) fn get_from<T>(value: T) -> OmniaBool where T : TryInto<bool> + PartialOrd, <T as TryInto<bool>>::Error: Debug, String: From<T>, i128: From<T> {
+    pub(crate) fn get_from<T>(value: T) -> OmniaBool where T : TryInto<bool> + From<bool> + PartialOrd, <T as TryInto<bool>>::Error: Debug, String: From<T>, i128: From<T> {
         match type_name::<T>() {
             "bool" => {
                 return OmniaBool::new(value.try_into().unwrap())
@@ -282,7 +282,7 @@ impl OmniaByte {
     pub fn get_value_as<T: From<i8>>(&self) -> T {
         T::from(self.value)
     }
-    pub(crate) fn get_from<T>(value: T) -> OmniaByte where T : TryInto<i8> + PartialOrd, <T as TryInto<i8>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaByte where T : TryInto<i8> + From<i8> + PartialOrd, <T as TryInto<i8>>::Error: Debug {
         if value < i8::MIN.into() {
             return OmniaByte::new(i8::MIN)
         }
@@ -318,7 +318,7 @@ impl OmniaUByte {
     pub fn get_value_as<T: From<u8>>(&self) -> T {
         T::from(self.value)
     }
-    pub(crate) fn get_from<T>(value: T) -> OmniaUByte where T : TryInto<u8> + PartialOrd, <T as TryInto<u8>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaUByte where T : TryInto<u8> + From<u8> + PartialOrd, <T as TryInto<u8>>::Error: Debug {
         if value < 0u8.into() {
             return OmniaUByte::new(0)
         }
@@ -359,7 +359,7 @@ impl OmniaInt {
     pub fn get_value_as<T: From<i32>>(&self) -> T {
         T::from(self.value)
     }
-    pub(crate) fn get_from<T>(value: T) -> OmniaInt where T : TryInto<i32> + PartialOrd, <T as TryInto<i32>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaInt where T : TryInto<i32> + From<i32> + PartialOrd, <T as TryInto<i32>>::Error: Debug {
         if value < i32::MIN.into() {
             return OmniaInt::new(i32::MIN)
         }
@@ -395,7 +395,7 @@ impl OmniaUInt {
     pub fn get_value_as<T: From<u32>>(&self) -> T {
         T::from(self.value)
     }
-    pub(crate) fn get_from<T>(value: T) -> OmniaUInt where T : TryInto<u32> + PartialOrd, <T as TryInto<u32>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaUInt where T : TryInto<u32> + From<u32> + PartialOrd, <T as TryInto<u32>>::Error: Debug {
         if value < 0u32.into() {
             return OmniaUInt::new(0)
         }
@@ -438,7 +438,7 @@ impl OmniaLong {
     pub fn get_value_as<T: From<i64>>(&self) -> T {
         T::from(self.value)
     }
-    pub(crate) fn get_from<T>(value: T) -> OmniaLong where T : TryInto<i64> + PartialOrd, <T as TryInto<i64>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaLong where T : TryInto<i64> + From<i64> + PartialOrd, <T as TryInto<i64>>::Error: Debug {
         if value < i64::MIN.into() {
             return OmniaLong::new(i64::MIN)
         }
@@ -457,7 +457,7 @@ impl OmniaULong {
     pub fn get_value_as<T: From<u64>>(&self) -> T {
         T::from(self.value)
     }
-    pub(crate) fn get_from<T>(value: T) -> OmniaULong where T : TryInto<u64> + PartialOrd, <T as TryInto<u64>>::Error: Debug {
+    pub(crate) fn get_from<T>(value: T) -> OmniaULong where T : TryInto<u64> + From<u64> + PartialOrd, <T as TryInto<u64>>::Error: Debug {
         if value < 0u64.into() {
             return OmniaULong::new(0)
         }

@@ -27,6 +27,15 @@ pub enum Operator{
     INC,
     DEC
 }
+#[derive(PartialEq, Debug)]
+pub enum AssignmentOperator {
+    ASSIGN,
+    PLUSASSIGN,
+    SUBASSIGN,
+    MULASSIGN,
+    DIVASSIGN,
+    REMASSIGN
+}
 pub struct BinaryExpression {
     left: Box<dyn Expression>,
     right: Box<dyn Expression>,
@@ -1264,6 +1273,43 @@ impl Expression for UnaryExpression {
 
             _ => {
                 panic!("Unexpected or unsupported type {:?}", v_type)
+            }
+        }
+    }
+}
+
+struct VariableCreationStatement {
+    name: String,
+    value: Box<dyn Expression>,
+    operation: AssignmentOperator,
+}
+impl VariableCreationStatement {
+    fn new(name: String, value: Box<dyn Expression>, operation: AssignmentOperator) -> VariableCreationStatement {
+        Self {
+            name,
+            value,
+            operation
+        }
+    }
+}
+
+impl Node for VariableCreationStatement {}
+
+impl Statement for VariableCreationStatement {
+    fn execute(&mut self) {
+        match self.operation {
+            AssignmentOperator::ASSIGN => unsafe {
+                let value = self.value.calc();
+                if let Err(c) = crate::core::runtime::RuntimeVariables::add_variable(self.name.clone(), value) {
+                    panic!("Variable with name {} already exists in this context! HINT: Try to rename to {}", self.name, self.name.clone()+"1")
+                }
+            }
+            AssignmentOperator::PLUSASSIGN => unsafe {
+                let value = self.value.calc();
+                todo!("This statement")
+            }
+            _ => {
+                panic!("Unexpected assign operator: {:?}", self.operation)
             }
         }
     }

@@ -815,14 +815,14 @@ impl CheckedIncDec for i8 {
     }
 }
 impl CheckedIncDec for u8 {
-    fn checked_inc(&self) -> Option<impl Add> {
+    fn checked_inc(&self) -> Option<u8> {
         if let Some(c) = self.checked_add(1u8) {
             Some(c)
         } else {
             None
         }
     }
-    fn checked_dec(&self) -> Option<impl Sub> {
+    fn checked_dec(&self) -> Option<u8> {
         if let Some(c) = self.checked_sub(1u8) {
             Some(c)
         } else {
@@ -830,6 +830,87 @@ impl CheckedIncDec for u8 {
         }
     }
 }
+impl CheckedIncDec for i32 {
+    fn checked_inc(&self) -> Option<i32> {
+        if let Some(c) = self.checked_add(1i32) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<i32> {
+        if let Some(c) = self.checked_sub(1i32) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+impl CheckedIncDec for u32 {
+    fn checked_inc(&self) -> Option<u32> {
+        if let Some(c) = self.checked_add(1u32) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<u32> {
+        if let Some(c) = self.checked_sub(1u32) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+impl CheckedIncDec for i64 {
+    fn checked_inc(&self) -> Option<i64> {
+        if let Some(c) = self.checked_add(1i64) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<i64> {
+        if let Some(c) = self.checked_sub(1i64) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+impl CheckedIncDec for u64 {
+    fn checked_inc(&self) -> Option<u64> {
+        if let Some(c) = self.checked_add(1u64) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<u64> {
+        if let Some(c) = self.checked_sub(1u64) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+impl CheckedIncDec for f64 {
+    fn checked_inc(&self) -> Option<f64> {
+        if let Some(c) = self.checked_add(1f64) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+    fn checked_dec(&self) -> Option<f64> {
+        if let Some(c) = self.checked_sub(1f64) {
+            Some(c)
+        } else {
+            None
+        }
+    }
+}
+
 
 impl CheckerF64 for f64 {
     fn checked_add(&self, b: f64) -> Option<f64> {
@@ -998,6 +1079,156 @@ impl UnaryExpression {
             _ => {
                 panic!("Unexpected or unsupported operator {:?}", self.operation)
             }
+        }
+    }
+    fn inc_ubyte(&self, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = val.get_value_as::<u8>().checked_inc() {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while incrementing!")
+        }
+    }
+    fn dec_ubyte(&self, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = val.get_value_as::<u8>().checked_dec() {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while decrementing!")
+        }
+    }
+
+    fn prepare_calc_int(&self, val: &OmniaInt) -> Box<dyn OmniaValue> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_int(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_int(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
+    fn inc_int(&self, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = val.get_value_as::<i32>().checked_inc() {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while incrementing!")
+        }
+    }
+    fn dec_int(&self, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = val.get_value_as::<i32>().checked_dec() {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while decrementing!")
+        }
+    }
+    fn prepare_calc_uint(&self, val: &OmniaUInt) -> Box<OmniaUInt> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_uint(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_uint(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
+    fn inc_uint(&self, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = val.get_value_as::<u32>().checked_inc() {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while incrementing!")
+        }
+    }
+    fn dec_uint(&self, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = val.get_value_as::<u32>().checked_dec() {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while decrementing!")
+        }
+    }
+    fn prepare_calc_long(&self, val: &OmniaLong) -> Box<dyn OmniaValue> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_long(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_long(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
+    fn inc_long(&self, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = val.get_value_as::<i64>().checked_inc() {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while incrementing!")
+        }
+    }
+    fn dec_long(&self, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = val.get_value_as::<i64>().checked_dec() {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while decrementing!")
+        }
+    }
+    fn prepare_calc_ulong(&self, val: &OmniaULong) -> Box<OmniaULong> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_ulong(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_ulong(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
+    fn inc_ulong(&self, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = val.get_value_as::<u64>().checked_inc() {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ulong bounds while incrementing!")
+        }
+    }
+    fn dec_ulong(&self, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = val.get_value_as::<u64>().checked_dec() {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ulong bounds while decrementing!")
+        }
+    }
+    fn prepare_calc_decimal(&self, val: &OmniaDecimal) -> Box<OmniaDecimal> {
+        match self.operation {
+            Operator::INC => {
+                Box::new(self.inc_decimal(val))
+            }
+            Operator::DEC => {
+                Box::new(self.dec_decimal(val))
+            }
+            _ => {
+                panic!("Unexpected or unsupported operator {:?}", self.operation)
+            }
+        }
+    }
+    fn inc_decimal(&self, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = val.get_value_as::<f64>().checked_inc() {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while incrementing!")
+        }
+    }
+    fn dec_decimal(&self, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = val.get_value_as::<f64>().checked_dec() {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while decrementing!")
         }
     }
 

@@ -1,7 +1,27 @@
-use std::any::Any;
+//! # Omnia Abstract Syntax Tree
+//! ***
+//! In this file you can find definitions and implementations of **AST** nodes.
+//!
+//! Main trait - [Node]. He doesn't do anything
+//!
+//! Two general traits - [Expression] and [Statement].
+//! A statement can be executed, it is a final command, that is, for example,
+//! ```rust
+//! if
+//! else
+//! while
+//! ```
+//! etc. are a Statement.
+//! Expression is an "expression" that can be calculated, the end result is [OmniaValue]. Example - `(2 + 1)`, `(551* var+(42-1))` etc.
+//! Unlike Expression, a "command line" can begin with a Statement
+//!
+//! Also in this file you can find the internal enums used to define the operation
+//!
+//!
+//!
 use std::cmp::PartialEq;
-use std::ops::{Add, Deref, Sub};
-use num_traits::{Float, Num};
+use std::ops::{Add, Sub};
+use num_traits::{Float};
 use num_traits::float::FloatCore;
 use crate::core::omnia_types::omnia_types::{OmniaByte, OmniaChar, OmniaDecimal, OmniaInt, OmniaLong, OmniaString, OmniaUByte, OmniaUInt, OmniaULong, OmniaValue};
 use crate::core::omnia_types::omnia_types::Type;
@@ -1306,7 +1326,7 @@ impl Statement for VariableCreationStatement {
             }
             AssignmentOperator::PLUSASSIGN => unsafe {
                 let value = self.value.calc();
-                todo!("This statement")
+                todo!("This statement and all others")
             }
             _ => {
                 panic!("Unexpected assign operator: {:?}", self.operation)

@@ -12,7 +12,7 @@
 //! while
 //! ```
 //! etc. are a Statement.
-//! Expression is an "expression" that can be calculated, the end result is [OmniaValue]. Example - `(2 + 1)`, `(551* var+(42-1))` etc.
+//! Expression is an "expression" that can be calculated, the end result is [OmniaValue]. Example - `(2 + 1)`, `(551 * var+(42-1))` etc.
 //! Unlike Expression, a "command line" can begin with a Statement
 //!
 //! Also in this file you can find the internal enums used to define the operation
@@ -20,11 +20,13 @@
 //!
 //!
 use std::cmp::PartialEq;
-use std::ops::{Add, Sub};
+use std::env::var;
+use std::ops::{Add, Deref, Sub};
 use num_traits::{Float};
 use num_traits::float::FloatCore;
 use crate::core::omnia_types::omnia_types::{OmniaByte, OmniaChar, OmniaDecimal, OmniaInt, OmniaLong, OmniaString, OmniaUByte, OmniaUInt, OmniaULong, OmniaValue};
 use crate::core::omnia_types::omnia_types::Type;
+use crate::core::runtime::{RuntimeVariables, Scope};
 
 trait Node {
 
@@ -1302,14 +1304,27 @@ struct VariableCreationStatement {
     name: String,
     value: Box<dyn Expression>,
     operation: AssignmentOperator,
+    scope: Scope
 }
 impl VariableCreationStatement {
-    fn new(name: String, value: Box<dyn Expression>, operation: AssignmentOperator) -> VariableCreationStatement {
+    fn new(name: String, value: Box<dyn Expression>, operation: AssignmentOperator, scope: Scope) -> VariableCreationStatement {
         Self {
             name,
             value,
-            operation
+            operation,
+            scope
         }
+    }
+    fn plus_assign_bytes(&self, var: &OmniaByte, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = var.get_value_as::<i8>().checked_add(val.get_value_as::<i8>()) {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while plusassigning!")
+        }
+    }
+
+    fn check_types(&self, l_type: &Type, r_type: &Type) -> bool {
+        l_type == r_type
     }
 }
 
@@ -1320,13 +1335,33 @@ impl Statement for VariableCreationStatement {
         match self.operation {
             AssignmentOperator::ASSIGN => unsafe {
                 let value = self.value.calc();
-                if let Err(c) = crate::core::runtime::RuntimeVariables::add_variable(self.name.clone(), value) {
+                let binding = value.get_type();
+                if let Err(c) = self.scope.set_var(self.name.clone(), (value, *binding.get_right())) {
                     panic!("Variable with name {} already exists in this context! HINT: Try to rename to {}", self.name, self.name.clone()+"1")
                 }
             }
             AssignmentOperator::PLUSASSIGN => unsafe {
                 let value = self.value.calc();
-                todo!("This statement and all others")
+                if let Ok(variable) = self.scope.get_var(self.name.clone()) {
+                    let binding = value.get_type();
+                    let value_type = binding.get_right();
+                    match variable.1 {
+                        Type::BYTE => {
+                            if !self.check_types(&Type::BYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to byte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_bytes(&variable.0, &value.downcast_ref::<OmniaByte>().unwrap())), Type::BYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+
+                        }
+                        _ => {
+                            panic!("Unexpected or unsupported type")
+                        }
+                    }
+                } else {
+                    panic!("Variable with name {} not found in this context!", self.name)
+                }
             }
             _ => {
                 panic!("Unexpected assign operator: {:?}", self.operation)

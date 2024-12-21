@@ -2,7 +2,8 @@
 ***
 ![Logo](https://github.com/user-attachments/assets/d33b21a8-f273-429d-8b75-d1d17da10d36 "Omnia lang logo")
 
-! **Work in progress** !
+> [!IMPORTANT]
+> **Work in progress**
 
 Omnia language is a **fast**, **secure** and **open-source** programming language
 

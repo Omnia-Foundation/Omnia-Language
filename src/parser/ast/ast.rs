@@ -1960,3 +1960,42 @@ impl Statement for AssignmentStatement {
         }
     }
 }
+
+pub struct VariableCreationStatement {
+    name: String,
+    value: Box<dyn Expression>,
+    scope: Scope,
+    static_type: Option<Type>
+}
+impl VariableCreationStatement {
+    pub fn new(name: String, value: Box<dyn Expression>, scope: Scope, static_type: Option<Type>) -> VariableCreationStatement {
+        Self {
+            name,
+            value,
+            scope,
+            static_type
+        }
+    }
+}
+
+impl Node for VariableCreationStatement {}
+
+impl Statement for VariableCreationStatement {
+    fn execute(&mut self) {
+        if self.static_type.is_none() {
+            let mut value = self.value.calc();
+            let binding = value.get_type();
+            self.scope.set_var(self.name.clone(), (value, *binding.get_right()))
+        } else {
+            let mut value = self.value.calc();
+            let mut expected_type = self.static_type.unwrap();
+            let binding = value.get_type();
+            let got_type = binding.get_right();
+            if *got_type == expected_type {
+                self.scope.set_var(self.name.clone(), (value, *got_type))
+            }else {
+                panic!("Expected type {:?}, got {:?}", expected_type, got_type)
+            }
+        }
+    }
+}

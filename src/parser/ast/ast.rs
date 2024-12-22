@@ -26,7 +26,7 @@ use num_traits::{Float};
 use num_traits::float::FloatCore;
 use crate::core::omnia_types::omnia_types::{OmniaByte, OmniaChar, OmniaDecimal, OmniaInt, OmniaLong, OmniaString, OmniaUByte, OmniaUInt, OmniaULong, OmniaValue};
 use crate::core::omnia_types::omnia_types::Type;
-use crate::core::runtime::{RuntimeVariables, Scope};
+use crate::core::runtime::{Scope};
 
 trait Node {
 
@@ -1333,14 +1333,14 @@ impl Node for VariableCreationStatement {}
 impl Statement for VariableCreationStatement {
     fn execute(&mut self) {
         match self.operation {
-            AssignmentOperator::ASSIGN => unsafe {
+            AssignmentOperator::ASSIGN => {
                 let value = self.value.calc();
                 let binding = value.get_type();
                 if let Err(c) = self.scope.set_var(self.name.clone(), (value, *binding.get_right())) {
                     panic!("Variable with name {} already exists in this context! HINT: Try to rename to {}", self.name, self.name.clone()+"1")
                 }
             }
-            AssignmentOperator::PLUSASSIGN => unsafe {
+            AssignmentOperator::PLUSASSIGN => {
                 let value = self.value.calc();
                 if let Ok(variable) = self.scope.get_var(self.name.clone()) {
                     let binding = value.get_type();
@@ -1354,6 +1354,22 @@ impl Statement for VariableCreationStatement {
                                 panic!("Occurred error while assigning new value to variable {}", self.name)
                             }
 
+                        }
+                        Type::INT => {
+                            if !self.check_types(&Type::INT, value_type) {
+                                panic!("Cannot add value of type {:?} to int value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_ints(&variable.0, &value.downcast_ref::<OmniaInt>().unwrap())), Type::INT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::LONG => {
+                            if !self.check_types(&Type::LONG, value_type) {
+                                panic!("Cannot add value of type {:?} to long value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_longs(&variable.0, &value.downcast_ref::<OmniaLong>().unwrap())), Type::LONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
                         }
                         _ => {
                             panic!("Unexpected or unsupported type")

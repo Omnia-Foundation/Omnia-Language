@@ -1300,14 +1300,14 @@ impl Expression for UnaryExpression {
     }
 }
 
-struct VariableCreationStatement {
+struct AssignmentStatement {
     name: String,
     value: Box<dyn Expression>,
     operation: AssignmentOperator,
     scope: Scope
 }
-impl VariableCreationStatement {
-    fn new(name: String, value: Box<dyn Expression>, operation: AssignmentOperator, scope: Scope) -> VariableCreationStatement {
+impl AssignmentStatement {
+    fn new(name: String, value: Box<dyn Expression>, operation: AssignmentOperator, scope: Scope) -> AssignmentStatement {
         Self {
             name,
             value,
@@ -1322,23 +1322,277 @@ impl VariableCreationStatement {
             panic!("Got value which is more or less than byte bounds while plusassigning!")
         }
     }
+    fn plus_assign_ints(&self, var: &OmniaInt, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = var.get_value_as::<i32>().checked_add(val.get_value_as::<i32>()) {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while plusassigning!")
+        }
+    }
+    fn plus_assign_longs(&self, var: &OmniaLong, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = var.get_value_as::<i64>().checked_add(val.get_value_as::<i64>()) {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while plusassigning!")
+        }
+    }
+    fn plus_assign_decimals(&self, var: &OmniaDecimal, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = var.get_value_as::<f64>().checked_add(val.get_value_as::<f64>()) {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while plusassigning!")
+        }
+    }
+    fn plus_assign_ubytes(&self, var: &OmniaUByte, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = var.get_value_as::<u8>().checked_add(val.get_value_as::<u8>()) {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while plusassigning!")
+        }
+    }
+    fn plus_assign_uints(&self, var: &OmniaUInt, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = var.get_value_as::<u32>().checked_add(val.get_value_as::<u32>()) {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while plusassigning!")
+        }
+    }
+    fn plus_assign_ulongs(&self, var: &OmniaULong, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = var.get_value_as::<u64>().checked_add(val.get_value_as::<u64>()) {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while plusassigning!")
+        }
+    }
+
+    fn sub_assign_bytes(&self, var: &OmniaByte, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = var.get_value_as::<i8>().checked_sub(val.get_value_as::<i8>()) {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while subassigning!")
+        }
+    }
+    fn sub_assign_ints(&self, var: &OmniaInt, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = var.get_value_as::<i32>().checked_sub(val.get_value_as::<i32>()) {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while subassigning!")
+        }
+    }
+    fn sub_assign_longs(&self, var: &OmniaLong, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = var.get_value_as::<i64>().checked_sub(val.get_value_as::<i64>()) {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while subassigning!")
+        }
+    }
+    fn sub_assign_decimals(&self, var: &OmniaDecimal, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = var.get_value_as::<f64>().checked_sub(val.get_value_as::<f64>()) {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while subassigning!")
+        }
+    }
+    fn sub_assign_ubytes(&self, var: &OmniaUByte, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = var.get_value_as::<u8>().checked_sub(val.get_value_as::<u8>()) {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while subassigning!")
+        }
+    }
+    fn sub_assign_uints(&self, var: &OmniaUInt, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = var.get_value_as::<u32>().checked_sub(val.get_value_as::<u32>()) {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while subassigning!")
+        }
+    }
+    fn sub_assign_ulongs(&self, var: &OmniaULong, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = var.get_value_as::<u64>().checked_sub(val.get_value_as::<u64>()) {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while subassigning!")
+        }
+    }
+
+    fn mul_assign_bytes(&self, var: &OmniaByte, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = var.get_value_as::<i8>().checked_mul(val.get_value_as::<i8>()) {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while mulassigning!")
+        }
+    }
+    fn mul_assign_ints(&self, var: &OmniaInt, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = var.get_value_as::<i32>().checked_mul(val.get_value_as::<i32>()) {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while mulassigning!")
+        }
+    }
+    fn mul_assign_longs(&self, var: &OmniaLong, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = var.get_value_as::<i64>().checked_mul(val.get_value_as::<i64>()) {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while mulassigning!")
+        }
+    }
+    fn mul_assign_decimals(&self, var: &OmniaDecimal, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = var.get_value_as::<f64>().checked_mul(val.get_value_as::<f64>()) {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while mulassigning!")
+        }
+    }
+    fn mul_assign_ubytes(&self, var: &OmniaUByte, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = var.get_value_as::<u8>().checked_mul(val.get_value_as::<u8>()) {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while mulassigning!")
+        }
+    }
+    fn mul_assign_uints(&self, var: &OmniaUInt, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = var.get_value_as::<u32>().checked_mul(val.get_value_as::<u32>()) {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while mulassigning!")
+        }
+    }
+    fn mul_assign_ulongs(&self, var: &OmniaULong, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = var.get_value_as::<u64>().checked_mul(val.get_value_as::<u64>()) {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while mulassigning!")
+        }
+    }
+    fn div_assign_bytes(&self, var: &OmniaByte, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = var.get_value_as::<i8>().checked_div(val.get_value_as::<i8>()) {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while divassigning!")
+        }
+    }
+    fn div_assign_ints(&self, var: &OmniaInt, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = var.get_value_as::<i32>().checked_div(val.get_value_as::<i32>()) {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while divassigning!")
+        }
+    }
+    fn div_assign_longs(&self, var: &OmniaLong, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = var.get_value_as::<i64>().checked_div(val.get_value_as::<i64>()) {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while divassigning!")
+        }
+    }
+    fn div_assign_decimals(&self, var: &OmniaDecimal, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = var.get_value_as::<f64>().checked_div(val.get_value_as::<f64>()) {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while divassigning!")
+        }
+    }
+    fn div_assign_ubytes(&self, var: &OmniaUByte, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = var.get_value_as::<u8>().checked_div(val.get_value_as::<u8>()) {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while divassigning!")
+        }
+    }
+    fn div_assign_uints(&self, var: &OmniaUInt, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = var.get_value_as::<u32>().checked_div(val.get_value_as::<u32>()) {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while divassigning!")
+        }
+    }
+    fn div_assign_ulongs(&self, var: &OmniaULong, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = var.get_value_as::<u64>().checked_div(val.get_value_as::<u64>()) {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while divassigning!")
+        }
+    }
+    fn rem_assign_bytes(&self, var: &OmniaByte, val: &OmniaByte) -> OmniaByte {
+        if let Some(calculated) = var.get_value_as::<i8>().checked_rem(val.get_value_as::<i8>()) {
+            OmniaByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than byte bounds while remassigning!")
+        }
+    }
+    fn rem_assign_ints(&self, var: &OmniaInt, val: &OmniaInt) -> OmniaInt {
+        if let Some(calculated) = var.get_value_as::<i32>().checked_rem(val.get_value_as::<i32>()) {
+            OmniaInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than int bounds while remassigning!")
+        }
+    }
+    fn rem_assign_longs(&self, var: &OmniaLong, val: &OmniaLong) -> OmniaLong {
+        if let Some(calculated) = var.get_value_as::<i64>().checked_rem(val.get_value_as::<i64>()) {
+            OmniaLong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while remassigning!")
+        }
+    }
+    fn rem_assign_decimals(&self, var: &OmniaDecimal, val: &OmniaDecimal) -> OmniaDecimal {
+        if let Some(calculated) = var.get_value_as::<f64>().checked_rem(val.get_value_as::<f64>()) {
+            OmniaDecimal::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than decimal bounds while remassigning!")
+        }
+    }
+    fn rem_assign_ubytes(&self, var: &OmniaUByte, val: &OmniaUByte) -> OmniaUByte {
+        if let Some(calculated) = var.get_value_as::<u8>().checked_rem(val.get_value_as::<u8>()) {
+            OmniaUByte::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than ubyte bounds while remassigning!")
+        }
+    }
+    fn rem_assign_uints(&self, var: &OmniaUInt, val: &OmniaUInt) -> OmniaUInt {
+        if let Some(calculated) = var.get_value_as::<u32>().checked_rem(val.get_value_as::<u32>()) {
+            OmniaUInt::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than uint bounds while remassigning!")
+        }
+    }
+    fn rem_assign_ulongs(&self, var: &OmniaULong, val: &OmniaULong) -> OmniaULong {
+        if let Some(calculated) = var.get_value_as::<u64>().checked_rem(val.get_value_as::<u64>()) {
+            OmniaULong::get_from(calculated)
+        } else {
+            panic!("Got value which is more or less than long bounds while remassigning!")
+        }
+    }
+
+
+    fn concat_strings(&self, var: &OmniaString, val: &OmniaString) -> OmniaString {
+        let mut temp = var.get_as_string();
+        temp.push_str(&val.get_as_string());
+        OmniaString::get_from(temp)
+    }
 
     fn check_types(&self, l_type: &Type, r_type: &Type) -> bool {
         l_type == r_type
     }
 }
 
-impl Node for VariableCreationStatement {}
+impl Node for AssignmentStatement {}
 
-impl Statement for VariableCreationStatement {
+impl Statement for AssignmentStatement {
     fn execute(&mut self) {
         match self.operation {
             AssignmentOperator::ASSIGN => {
                 let value = self.value.calc();
                 let binding = value.get_type();
-                if let Err(c) = self.scope.set_var(self.name.clone(), (value, *binding.get_right())) {
-                    panic!("Variable with name {} already exists in this context! HINT: Try to rename to {}", self.name, self.name.clone()+"1")
+                if let Some(var) = self.scope.get_var(self.name.clone()) {
+                    if !self.check_types(&var.1, &binding.get_right()) {
+                        panic!("Cannot set value of type {:?} to variable with type {:?}!", binding.get_right(), var.1)
+                    }
+                    self.scope.set_var(self.name.clone(), (value, *binding.get_right()))
+                    // panic!("Variable with name {} already exists in this context! HINT: Try to rename to {}", self.name, self.name.clone()+"1")
+                }else {
+                    panic!("Variable with name {} not found in this context!", self.name)
                 }
+
             }
             AssignmentOperator::PLUSASSIGN => {
                 let value = self.value.calc();
@@ -1371,6 +1625,46 @@ impl Statement for VariableCreationStatement {
                                 panic!("Occurred error while assigning new value to variable {}", self.name)
                             }
                         }
+                        Type::DECIMAL => {
+                            if !self.check_types(&Type::DECIMAL, value_type) {
+                                panic!("Cannot add value of type {:?} to decimal value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_decimals(&variable.0, &value.downcast_ref::<OmniaDecimal>().unwrap())), Type::DECIMAL)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::STRING => {
+                            if !self.check_types(&Type::STRING, value_type) {
+                                panic!("Cannot add value of type {:?} to string value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.concat_strings(&variable.0, &value.downcast_ref::<OmniaString>().unwrap())), Type::STRING)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UBYTE => {
+                            if !self.check_types(&Type::UBYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to ubyte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_ubytes(&variable.0, &value.downcast_ref::<OmniaUByte>().unwrap())), Type::UBYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UINT => {
+                            if !self.check_types(&Type::UINT, value_type) {
+                                panic!("Cannot add value of type {:?} to uint value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_uints(&variable.0, &value.downcast_ref::<OmniaUInt>().unwrap())), Type::UINT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::ULONG => {
+                            if !self.check_types(&Type::ULONG, value_type) {
+                                panic!("Cannot add value of type {:?} to ulong value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.plus_assign_ulongs(&variable.0, &value.downcast_ref::<OmniaULong>().unwrap())), Type::ULONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
                         _ => {
                             panic!("Unexpected or unsupported type")
                         }
@@ -1379,8 +1673,289 @@ impl Statement for VariableCreationStatement {
                     panic!("Variable with name {} not found in this context!", self.name)
                 }
             }
-            _ => {
-                panic!("Unexpected assign operator: {:?}", self.operation)
+            AssignmentOperator::SUBASSIGN => {
+                let value = self.value.calc();
+                if let Ok(variable) = self.scope.get_var(self.name.clone()) {
+                    let binding = value.get_type();
+                    let value_type = binding.get_right();
+                    match variable.1 {
+                        Type::BYTE => {
+                            if !self.check_types(&Type::BYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to byte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_bytes(&variable.0, &value.downcast_ref::<OmniaByte>().unwrap())), Type::BYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+
+                        }
+                        Type::INT => {
+                            if !self.check_types(&Type::INT, value_type) {
+                                panic!("Cannot add value of type {:?} to int value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_ints(&variable.0, &value.downcast_ref::<OmniaInt>().unwrap())), Type::INT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::LONG => {
+                            if !self.check_types(&Type::LONG, value_type) {
+                                panic!("Cannot add value of type {:?} to long value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_longs(&variable.0, &value.downcast_ref::<OmniaLong>().unwrap())), Type::LONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::DECIMAL => {
+                            if !self.check_types(&Type::DECIMAL, value_type) {
+                                panic!("Cannot add value of type {:?} to decimal value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_decimals(&variable.0, &value.downcast_ref::<OmniaDecimal>().unwrap())), Type::DECIMAL)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UBYTE => {
+                            if !self.check_types(&Type::UBYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to ubyte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_ubytes(&variable.0, &value.downcast_ref::<OmniaUByte>().unwrap())), Type::UBYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UINT => {
+                            if !self.check_types(&Type::UINT, value_type) {
+                                panic!("Cannot add value of type {:?} to uint value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_uints(&variable.0, &value.downcast_ref::<OmniaUInt>().unwrap())), Type::UINT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::ULONG => {
+                            if !self.check_types(&Type::ULONG, value_type) {
+                                panic!("Cannot add value of type {:?} to ulong value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.sub_assign_ulongs(&variable.0, &value.downcast_ref::<OmniaULong>().unwrap())), Type::ULONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        _ => {
+                            panic!("Unexpected or unsupported type")
+                        }
+                    }
+                } else {
+                    panic!("Variable with name {} not found in this context!", self.name)
+                }
+            }
+            AssignmentOperator::MULASSIGN => {
+                let value = self.value.calc();
+                if let Ok(variable) = self.scope.get_var(self.name.clone()) {
+                    let binding = value.get_type();
+                    let value_type = binding.get_right();
+                    match variable.1 {
+                        Type::BYTE => {
+                            if !self.check_types(&Type::BYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to byte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_bytes(&variable.0, &value.downcast_ref::<OmniaByte>().unwrap())), Type::BYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+
+                        }
+                        Type::INT => {
+                            if !self.check_types(&Type::INT, value_type) {
+                                panic!("Cannot add value of type {:?} to int value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_ints(&variable.0, &value.downcast_ref::<OmniaInt>().unwrap())), Type::INT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::LONG => {
+                            if !self.check_types(&Type::LONG, value_type) {
+                                panic!("Cannot add value of type {:?} to long value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_longs(&variable.0, &value.downcast_ref::<OmniaLong>().unwrap())), Type::LONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::DECIMAL => {
+                            if !self.check_types(&Type::DECIMAL, value_type) {
+                                panic!("Cannot add value of type {:?} to decimal value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_decimals(&variable.0, &value.downcast_ref::<OmniaDecimal>().unwrap())), Type::DECIMAL)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UBYTE => {
+                            if !self.check_types(&Type::UBYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to ubyte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_ubytes(&variable.0, &value.downcast_ref::<OmniaUByte>().unwrap())), Type::UBYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UINT => {
+                            if !self.check_types(&Type::UINT, value_type) {
+                                panic!("Cannot add value of type {:?} to uint value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_uints(&variable.0, &value.downcast_ref::<OmniaUInt>().unwrap())), Type::UINT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::ULONG => {
+                            if !self.check_types(&Type::ULONG, value_type) {
+                                panic!("Cannot add value of type {:?} to ulong value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.mul_assign_ulongs(&variable.0, &value.downcast_ref::<OmniaULong>().unwrap())), Type::ULONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        _ => {
+                            panic!("Unexpected or unsupported type")
+                        }
+                    }
+                } else {
+                    panic!("Variable with name {} not found in this context!", self.name)
+                }
+            }
+            AssignmentOperator::DIVASSIGN => {
+                let value = self.value.calc();
+                if let Ok(variable) = self.scope.get_var(self.name.clone()) {
+                    let binding = value.get_type();
+                    let value_type = binding.get_right();
+                    match variable.1 {
+                        Type::BYTE => {
+                            if !self.check_types(&Type::BYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to byte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_bytes(&variable.0, &value.downcast_ref::<OmniaByte>().unwrap())), Type::BYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+
+                        }
+                        Type::INT => {
+                            if !self.check_types(&Type::INT, value_type) {
+                                panic!("Cannot add value of type {:?} to int value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_ints(&variable.0, &value.downcast_ref::<OmniaInt>().unwrap())), Type::INT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::LONG => {
+                            if !self.check_types(&Type::LONG, value_type) {
+                                panic!("Cannot add value of type {:?} to long value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_longs(&variable.0, &value.downcast_ref::<OmniaLong>().unwrap())), Type::LONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::DECIMAL => {
+                            if !self.check_types(&Type::DECIMAL, value_type) {
+                                panic!("Cannot add value of type {:?} to decimal value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_decimals(&variable.0, &value.downcast_ref::<OmniaDecimal>().unwrap())), Type::DECIMAL)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UBYTE => {
+                            if !self.check_types(&Type::UBYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to ubyte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_ubytes(&variable.0, &value.downcast_ref::<OmniaUByte>().unwrap())), Type::UBYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UINT => {
+                            if !self.check_types(&Type::UINT, value_type) {
+                                panic!("Cannot add value of type {:?} to uint value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_uints(&variable.0, &value.downcast_ref::<OmniaUInt>().unwrap())), Type::UINT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::ULONG => {
+                            if !self.check_types(&Type::ULONG, value_type) {
+                                panic!("Cannot add value of type {:?} to ulong value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.div_assign_ulongs(&variable.0, &value.downcast_ref::<OmniaULong>().unwrap())), Type::ULONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        _ => {
+                            panic!("Unexpected or unsupported type")
+                        }
+                    }
+                } else {
+                    panic!("Variable with name {} not found in this context!", self.name)
+                }
+            }
+            AssignmentOperator::REMASSIGN => {
+                let value = self.value.calc();
+                if let Ok(variable) = self.scope.get_var(self.name.clone()) {
+                    let binding = value.get_type();
+                    let value_type = binding.get_right();
+                    match variable.1 {
+                        Type::BYTE => {
+                            if !self.check_types(&Type::BYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to byte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_bytes(&variable.0, &value.downcast_ref::<OmniaByte>().unwrap())), Type::BYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+
+                        }
+                        Type::INT => {
+                            if !self.check_types(&Type::INT, value_type) {
+                                panic!("Cannot add value of type {:?} to int value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_ints(&variable.0, &value.downcast_ref::<OmniaInt>().unwrap())), Type::INT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::LONG => {
+                            if !self.check_types(&Type::LONG, value_type) {
+                                panic!("Cannot add value of type {:?} to long value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_longs(&variable.0, &value.downcast_ref::<OmniaLong>().unwrap())), Type::LONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::DECIMAL => {
+                            if !self.check_types(&Type::DECIMAL, value_type) {
+                                panic!("Cannot add value of type {:?} to decimal value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_decimals(&variable.0, &value.downcast_ref::<OmniaDecimal>().unwrap())), Type::DECIMAL)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UBYTE => {
+                            if !self.check_types(&Type::UBYTE, value_type) {
+                                panic!("Cannot add value of type {:?} to ubyte value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_ubytes(&variable.0, &value.downcast_ref::<OmniaUByte>().unwrap())), Type::UBYTE)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::UINT => {
+                            if !self.check_types(&Type::UINT, value_type) {
+                                panic!("Cannot add value of type {:?} to uint value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_uints(&variable.0, &value.downcast_ref::<OmniaUInt>().unwrap())), Type::UINT)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        Type::ULONG => {
+                            if !self.check_types(&Type::ULONG, value_type) {
+                                panic!("Cannot add value of type {:?} to ulong value!", value_type)
+                            }
+                            if let Err(s) = self.scope.set_var(self.name.clone(), (Box::new(self.rem_assign_ulongs(&variable.0, &value.downcast_ref::<OmniaULong>().unwrap())), Type::ULONG)) {
+                                panic!("Occurred error while assigning new value to variable {}", self.name)
+                            }
+                        }
+                        _ => {
+                            panic!("Unexpected or unsupported type")
+                        }
+                    }
+                } else {
+                    panic!("Variable with name {} not found in this context!", self.name)
+                }
             }
         }
     }

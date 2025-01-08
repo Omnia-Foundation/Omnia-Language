@@ -1,36 +1,44 @@
 use std::collections::hash_map::Values;
 use std::io::Stderr;
 use std::ops::RangeBounds;
-use crate::lexer::token::TokenType::{EOF, KEYWORDS_E, KEYWORDS_S, OPERATORS_E, OPERATORS_S, OTHERS_E, OTHERS_S, STDDATATYPES_E, STDDATATYPES_S};
+use crate::lexer::token::TokenType::{ARITHMETIC_E, ARITHMETIC_S, ASSIGNMENT_E, ASSIGNMENT_S, COND_E, COND_S, EOF, KEYWORDS_E, KEYWORDS_S, MINUS, OPERATORS_E, OPERATORS_S, OTHERS_E, OTHERS_S, STDDATATYPES_E, STDDATATYPES_S, UNARY_E, UNARY_S};
 
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 pub enum TokenType {
     OPERATORS_S,
+    ARITHMETIC_S,
     STAR,       // *
     SLASH,      // /
     PLUS,       // +
     MINUS,      // -
-    AMPERSAND,  // &
+    REM,        // %
+    ARITHMETIC_E,
     AND,        // &&
     OR,         // ||
+    COND_S,
     LS,         // <
     GT,         // >
     EQ,         // ==
-    ASSIGN,     // =
-    NOT,        // !
-    INC,        // ++
-    DEC,        // --
     NEQ,        // !=
     LEQ,        // <=
     GEQ,        // >=
+    COND_E,
+    ASSIGNMENT_S,
+    ASSIGN,     // =
     ANDASSIGN,  // &=
     ORASSIGN,   // |=
     PLUSASSIGN, // +=
     MINUSASSIGN,// -=
     MULASSIGN,  // *=
     DIVASSIGN,  // /=
-    REM,        // %
     REMASSIGN,  // %=
+    ASSIGNMENT_E,
+    UNARY_S,
+    AMPERSAND,  // &
+    NOT,        // !
+    INC,        // ++
+    DEC,        // --
+    UNARY_E,
     ACCESS,     // ::
     ARROW,      // ->
     DOLLAR,     // $
@@ -120,8 +128,12 @@ impl TokenType {
     pub fn is_operator(t: &TokenType) -> bool {
         (OPERATORS_S..OPERATORS_E).contains(t)
     }
+    pub fn is_arithmetic_operator(t: &TokenType) -> bool { (ARITHMETIC_S..ARITHMETIC_E).contains(t) }
+    pub fn is_unary_operator(t: &TokenType) -> bool { (UNARY_S..UNARY_E).contains(t) || t == &MINUS }
+    pub fn is_conditional_operator(t: &TokenType) -> bool { (COND_S..COND_E).contains(t) }
+    pub fn is_assignment_operator(t: &TokenType) -> bool { (ASSIGNMENT_S..ASSIGNMENT_E).contains(t) }
     pub fn is_eof(t: &TokenType) -> bool {
-        EOF == *t
+        &EOF == t
     }
     pub fn is_other(t: &TokenType) -> bool {
         (OTHERS_S..OTHERS_E).contains(t)

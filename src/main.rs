@@ -2,13 +2,14 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::Read;
 use std::process::exit;
-use crate::core::omnia_types::omnia_types::{OmniaByte, OmniaValue, Type};
-use crate::core::omnia_types::omnia_types::Type::{ANYNUM};
-use crate::lexer::lexer::Lexer;
+use crate::core::omnia_types::{OmniaByte, OmniaValue, Type};
+use crate::core::omnia_types::Type::{ANYNUM};
+use crate::lexer::Lexer;
 
 mod lexer;
 mod parser;
 mod core;
+
 fn main() {
     // let mut buf = Vec::new();
     // File::open("src/test.oa").unwrap().read_to_end(&mut buf).expect("Error yomayo");

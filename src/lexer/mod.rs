@@ -1,3 +1,5 @@
+
+pub mod token;
 //! # Omnia Lexer
 //! ***
 //!
@@ -73,30 +75,30 @@ impl Lexer {
         while self.has_next() {
             match self.l_cur {
                 '&' => { if self.peek(1) == '&' { self.push_token(AND); self.next() }
-                    else if self.peek(1) == '=' { self.push_token(ANDASSIGN); self.next() }
-                    else { self.push_token(AMPERSAND); } self.next() }
+                else if self.peek(1) == '=' { self.push_token(ANDASSIGN); self.next() }
+                else { self.push_token(AMPERSAND); } self.next() }
                 '*' => { if self.peek(1) == '=' { self.push_token(MULASSIGN); self.next() }
-                    else { self.push_token(STAR) } self.next() }
+                else { self.push_token(STAR) } self.next() }
                 '/' => { if self.peek(1) == '/' { while self.l_cur != '\n' { self.next() } }
-                    else if self.peek(1) == '=' { self.push_token(DIVASSIGN); self.next() }
-                    else { self.push_token(SLASH); } self.next(); }
+                else if self.peek(1) == '=' { self.push_token(DIVASSIGN); self.next() }
+                else { self.push_token(SLASH); } self.next(); }
                 '+' => { if self.peek(1) == '+' { self.push_token(INC); self.next(); }
-                    else if self.peek(1) == '=' { self.push_token(PLUSASSIGN); self.next() }
-                    else { self.push_token(PLUS) }; self.next() }
+                else if self.peek(1) == '=' { self.push_token(PLUSASSIGN); self.next() }
+                else { self.push_token(PLUS) }; self.next() }
                 '-' => { if self.peek(1) == '-' { self.push_token(DEC); self.next(); }
-                    else if self.peek(1) == '=' { self.push_token(MINUSASSIGN); self.next(); }
-                    else if self.peek(1) == '>' { self.push_token(ARROW); self.next() }
-                    else { self.push_token(MINUS) }; self.next() }
+                else if self.peek(1) == '=' { self.push_token(MINUSASSIGN); self.next(); }
+                else if self.peek(1) == '>' { self.push_token(ARROW); self.next() }
+                else { self.push_token(MINUS) }; self.next() }
                 '|' => { if self.peek(1) == '|' { self.push_token(OR); self.next() }
-                    else if self.peek(1) == '=' { self.push_token(ORASSIGN); self.next() }
-                    else { panic!("Requires one another | after existing") } ; self.next() }
+                else if self.peek(1) == '=' { self.push_token(ORASSIGN); self.next() }
+                else { panic!("Requires one another | after existing") } ; self.next() }
                 '<' => { if self.peek(1) == '=' { self.push_token(LEQ); self.next() } else { self.push_token(LS) }; self.next() }
                 '>' => { if self.peek(1) == '=' { self.push_token(GEQ); self.next() }
-                    else if self.peek(1) == '>' { self.push_token(LAMBDA); self.next() }
-                    else { self.push_token(GT) }; self.next() }
+                else if self.peek(1) == '>' { self.push_token(LAMBDA); self.next() }
+                else { self.push_token(GT) }; self.next() }
                 '=' => { if self.peek(1) == '=' { self.push_token(EQ); self.next() }
-                    else if self.peek(1) == '!' { self.push_token(FEQ); self.next() }
-                    else { self.push_token(ASSIGN) } self.next() }
+                else if self.peek(1) == '!' { self.push_token(FEQ); self.next() }
+                else { self.push_token(ASSIGN) } self.next() }
                 '!' => { if self.peek(1) == '=' { self.push_token(NEQ); self.next() } else { self.push_token(NOT) }; self.next() }
                 '%' => { if self.peek(1) == '=' { self.push_token(REMASSIGN); self.next() } else { self.push_token(REM); } self.next()  }
                 ':' => { if self.peek(1) == ':' { self.push_token(ACCESS); self.next() } else { self.push_token(COLON) }; self.next() }

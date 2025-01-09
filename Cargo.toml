@@ -6,5 +6,4 @@ edition = "2021"
 [dependencies]
 rustring_builder = "0.2.0"
 num-traits = "0.2.19"
-downcast-rs = "1.2.1"
-inkwell = "0.5.0"
+downcast-rs = "2.0.1"

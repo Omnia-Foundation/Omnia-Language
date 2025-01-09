@@ -5,6 +5,8 @@ use crate::parser::ast::ast_vm::AssignmentOperator::{ANDA, ASSIGN, DIVA, MINUSA,
 use crate::parser::ast::ast_vm::BinaryOperation::{Add, Div, Mul, Rem, Sub};
 use crate::parser::ast::ast_vm::ConditionalOperation::{Eq, Greater, GreaterEq, Less, LessEq, NotEq};
 use crate::parser::ast::ast_vm::UnaryOperation::{Dec, Inc, Neg, Not};
+use crate::parser::CompilerError;
+use crate::parser::CompilerError::TypeError;
 
 pub enum  ASTNode {
     Expression(Expression),
@@ -55,22 +57,23 @@ pub enum LiteralExpression {
     Char(CharNode)
 }
 pub enum Expression {
-    Literal(LiteralExpression),
-    Binary(BinaryExpressionNode),
-    Unary(UnaryExpressionNode),
-    VariableAccess(VariableAccessExpressionNode)
+    Literal(Box<LiteralExpression>),
+    Binary(Box<BinaryOperation>),
+    Unary(Box<UnaryExpressionNode>),
+    VariableAccess(Box<VariableAccessExpressionNode>)
 }
 pub enum Statement {
-    If(IfStatementNode),
-    Block(BlockStatementNode),
-    Plug(PlugStatementNode),
-    FunctionCall(FunctionCallStatementNode),
-    FunctionDeclaration(FunctionDeclarationStatementNode),
-    Assignment(AssignmentStatementNode),
-    VariableCreation(VariableCreationStatementNode)
+    If(Box<IfStatementNode>),
+    Block(Box<BlockStatementNode>),
+    Plug(Box<PlugStatementNode>),
+    FunctionCall(Box<FunctionCallStatementNode>),
+    FunctionDeclaration(Box<FunctionDeclarationStatementNode>),
+    Assignment(Box<AssignmentStatementNode>),
+    VariableCreation(Box<VariableCreationStatementNode>),
+    Return(Box<ReturnStatementNode>)
 }
 impl ConditionalOperation {
-    pub fn from_string(string: &str) -> Result<ConditionalOperation, Err(&str)> {
+    pub fn from_string(string: &str) -> Result<ConditionalOperation, CompilerError> {
         match string {
             ">" => {
                 Ok(Greater)
@@ -91,13 +94,13 @@ impl ConditionalOperation {
                 Ok(NotEq)
             }
             &_ => {
-                Err(format!("Unexpected conditional operator in string {}", string))
+                Err(TypeError(format!("Unexpected conditional operator in string {}", string)))
             }
         }
     }
-    pub fn from_token_type(t: &TokenType) -> Result<ConditionalOperation, Err(&str)> {
+    pub fn from_token_type(t: &TokenType) -> Result<ConditionalOperation, CompilerError> {
         if !TokenType::is_conditional_operator(t) {
-            return Err(format!("Unexpected token type ({}) for conditional operator", t))
+            return Err(TypeError(format!("Unexpected token type ({}) for conditional operator", t)))
         }
         match t {
             TokenType::GT => {
@@ -119,14 +122,14 @@ impl ConditionalOperation {
                 Ok(NotEq)
             }
             &_ => {
-                Err("")
+                Err(TypeError(format!("Unexpected conditional operator in token {}", t)))
             }
         }
     }
 }
 
 impl UnaryOperation {
-    pub fn from_string(string: &str) -> Result<UnaryOperation, Err(&str)> {
+    pub fn from_string(string: &str) -> Result<UnaryOperation, CompilerError> {
         match string {
             "++" => {
                 Ok(Inc)
@@ -141,13 +144,13 @@ impl UnaryOperation {
                 Ok(Neg)
             }
             &_ => {
-                Err(format!("Unexpected unary operator in string {}", string))
+                Err(TypeError(format!("Unexpected unary operator in string {}", string)))
             }
         }
     }
-    pub fn from_token_type(t: &TokenType) -> Result<UnaryOperation, Err(&str)> {
+    pub fn from_token_type(t: &TokenType) -> Result<UnaryOperation, CompilerError> {
         if !TokenType::is_unary_operator(t) {
-            return Err(format!("Unexpected token type ({}) for unary operator", t))
+            return Err(TypeError(format!("Unexpected token type ({}) for unary operator", t)))
         }
         match t {
             TokenType::INC => {
@@ -163,14 +166,14 @@ impl UnaryOperation {
                 Ok(Neg)
             }
             &_ => {
-                Err("")
+                Err(TypeError(String::new()))
             }
         }
     }
 }
 
 impl BinaryOperation {
-    pub fn from_string(string: &str) -> Result<BinaryOperation, Err(&str)> {
+    pub fn from_string(string: &str) -> Result<BinaryOperation, CompilerError> {
         match string {
             "+" => {
                 Ok(Add)
@@ -188,13 +191,13 @@ impl BinaryOperation {
                 Ok(Rem)
             }
             &_ => {
-                Err(format!("Unexpected binary operator in string {}", string))
+                Err(TypeError(format!("Unexpected binary operator in string {}", string)))
             }
         }
     }
-    pub fn from_token_type(t: &TokenType) -> Result<BinaryOperation, Err(&str)> {
+    pub fn from_token_type(t: &TokenType) -> Result<BinaryOperation, CompilerError> {
         if !TokenType::is_arithmetic_operator(t) {
-            return Err(format!("Unexpected token type ({}) for binary operator", t))
+            return Err(TypeError(format!("Unexpected token type ({}) for binary operator", t)))
         }
         match t {
             TokenType::PLUS => {
@@ -213,7 +216,7 @@ impl BinaryOperation {
                 Ok(Rem)
             }
             &_ => {
-                Err("")
+                Err(TypeError(String::new()))
             }
         }
     }
@@ -229,7 +232,7 @@ pub enum AssignmentOperator {
     ORA
 }
 impl AssignmentOperator {
-    pub fn from_string(string: &str) -> Result<AssignmentOperator, Err(&str)> {
+    pub fn from_string(string: &str) -> Result<AssignmentOperator, CompilerError> {
         match string {
             "=" => {
                 Ok(ASSIGN)
@@ -256,13 +259,13 @@ impl AssignmentOperator {
                 Ok(ORA)
             }
             &_ => {
-                Err(format!("Unexpected assignment operator in string {}", string))
+                Err(TypeError(format!("Unexpected assignment operator in string {}", string)))
             }
         }
     }
-    pub fn from_token_type(t: &TokenType) -> Result<AssignmentOperator, Err(&str)> {
+    pub fn from_token_type(t: &TokenType) -> Result<AssignmentOperator, CompilerError> {
         if !TokenType::is_assignment_operator(t) {
-            return Err(format!("Unexpected token type ({}) for assignment operator", t))
+            return Err(TypeError(format!("Unexpected token type ({}) for assignment operator", t)))
         }
         match t {
             TokenType::ASSIGN => {
@@ -290,7 +293,7 @@ impl AssignmentOperator {
                 Ok(ORA)
             }
             &_ => {
-                Err("")
+                Err(TypeError(String::new()))
             }
         }
     }
@@ -320,7 +323,7 @@ pub struct ULongNode {
 pub struct CharNode {
     value: OmniaChar
 }
-pub struct SpanNode<T> {
+pub struct SpanNode<T: FromPrimitive + Clone> {
     value: OmniaSpan<T>
 }
 
@@ -337,7 +340,13 @@ pub struct UnaryExpressionNode {
 pub struct VariableAccessExpressionNode {
     name: String
 }
-
+impl VariableAccessExpressionNode {
+    pub fn new(name: String) -> Self {
+        Self {
+            name
+        }
+    }
+}
 
 pub struct AssignmentStatementNode {
     cont: Expression,
@@ -358,9 +367,36 @@ pub struct VariableCreationStatementNode {
     r#type: Type,
     value: Expression
 }
+impl VariableCreationStatementNode {
+    pub fn new(name: String, r#type: Type, value: Expression) -> VariableCreationStatementNode {
+        Self {
+            name,
+            r#type,
+            value
+        }
+    }
+}
+
+pub struct ReturnStatementNode {
+    value: ASTNode
+}
+impl ReturnStatementNode {
+    pub fn new(value: ASTNode) -> ReturnStatementNode {
+        Self {
+            value
+        }
+    }
+}
 
 pub struct PlugStatementNode {
     lib: String
+}
+impl PlugStatementNode {
+    pub fn new(lib: String) -> Self {
+        Self {
+            lib
+        }
+    }
 }
 pub struct IfStatementNode {
     cond: ConditionalOperation,
@@ -370,7 +406,16 @@ pub struct IfStatementNode {
 pub struct BlockStatementNode {
     body: Vec<ASTNode>
 }
-
+impl BlockStatementNode {
+    pub fn new() -> BlockStatementNode {
+        Self {
+            body: Vec::new()
+        }
+    }
+    pub fn add_node(&mut self, node: ASTNode) {
+        self.body.push(node)
+    }
+}
 
 
 

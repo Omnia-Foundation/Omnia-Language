@@ -1,5 +1,5 @@
 
-pub mod token;
+
 //! # Omnia Lexer
 //! ***
 //!
@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use rustring_builder::StringBuilder;
 use crate::lexer::token::{Token, TokenType};
 use crate::lexer::token::TokenType::{ACCESS, ALLOWS, AMPERSAND, AND, ANDASSIGN, ANYKW, ARROW, ASSIGN, BYTEKW, COLON, COMMA, DEC, DECIMAL, DECIMALKW, DISRUPT, DIVASSIGN, DOLLAR, ELSE, EOF, EQ, EXPORT, EXT, FEQ, FOR, FUNC, GEQ, GT, HIDDEN, IDENT, IF, INC, INT, INTKW, LAMBDA, LBRACE, LBRACK, LEQ, LONGKW, LPAREN, LS, MINUS, MINUSASSIGN, MK, MULASSIGN, NEQ, NOT, NULLKW, OPEN, OR, ORASSIGN, OVERRIDE, PERIOD, PLUG, PLUS, PLUSASSIGN, POWER, QUESTION, RBRACE, RBRACK, REM, REMASSIGN, REQUIRES, RETURN, RPAREN, SEMICOLON, SKIP, SLASH, STAR, STATIC, STRUCT, SWITCH, UBYTEKW, UINTKW, ULONGKW, UNDERSCORE, VISIBLE, WAITS};
-
+pub mod token;
 #[derive(Clone)]
 pub struct Lexer {
     l_pos: usize,

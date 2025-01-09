@@ -3,11 +3,15 @@ use std::alloc::{alloc, Layout};
 use std::any::{type_name, Any, TypeId};
 use std::fmt::Debug;
 use std::hash::{DefaultHasher, Hash, Hasher};
+use std::io::Error;
 use std::sync::Arc;
 use downcast_rs::impl_downcast;
 use num_traits::{AsPrimitive, FromPrimitive};
 use crate::core::omnia_types::Type::{ANYNUM, BOOL, BYTE, CHAR, DECIMAL, INT, LONG, OTHER, STRING, STRLIKE, UBYTE, UINT, ULONG};
-
+use crate::lexer::token::TokenType;
+use crate::lexer::token::TokenType::DECIMALKW;
+use crate::parser::CompilerError;
+use crate::parser::CompilerError::TypeError;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Type {
@@ -27,6 +31,23 @@ pub enum Type {
     STRLIKE,
     OTHER,
 
+}
+
+impl Type {
+    pub fn from_token_type(t: &TokenType) -> Result<Type, CompilerError> {
+        match t {
+            &DECIMALKW => Ok(DECIMAL),
+            &TokenType::CHARKW => Ok(CHAR),
+            &TokenType::BOOLKW => Ok(BOOL),
+            &TokenType::BYTEKW => Ok(BYTE),
+            &TokenType::UBYTEKW => Ok(UBYTE),
+            &TokenType::INTKW => Ok(INT),
+            &TokenType::UINTKW => Ok(UINT),
+            &TokenType::LONGKW => Ok(LONG),
+            &TokenType::ULONGKW => Ok(ULONG),
+            _ => Err(TypeError(String::from("Unexpected token type for type")))
+        }
+    }
 }
 
 #[derive(PartialEq, Copy, Clone)]
@@ -511,16 +532,16 @@ impl OmniaValue for OmniaULong {
 pub struct OmniaSpan<T: FromPrimitive + Clone> {
     value: Vec<T>
 }
-impl <T: Clone> OmniaSpan<T> {
+impl <T: Clone + FromPrimitive> OmniaSpan<T> {
     fn new(value: Vec<T>) -> OmniaSpan<T> {
         Self {
             value
         }
     }
-    pub fn get_value_as<T: From<Vec<T>>>(&self) -> Vec<T> {
-        T::from(self.value.clone())
+    pub fn get_value_as<F: From<Vec<T>>>(&self) -> Vec<F> {
+        F::from(self.value.clone())
     }
-    pub(crate) fn get_from<F>(value: Vec<F>) -> OmniaSpan<T> where F : TryInto<Vec<T>> + PartialOrd, <F as TryInto<Vec<T>>>::Error: Debug {
+    pub(crate) fn get_from<F>(value: Vec<F>) -> OmniaSpan<T> where F : FromPrimitive + Clone {
         OmniaSpan::new(value)
     }
 }

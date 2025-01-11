@@ -144,7 +144,6 @@ impl TokenType {
 impl Display for TokenType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            _ => { write!(f, "unexpected") }
             TokenType::STAR => { write!(f, "*") }
             TokenType::SLASH => { write!(f, "/") }
             TokenType::PLUS => { write!(f, "+") }
@@ -234,6 +233,7 @@ impl Display for TokenType {
             TokenType::ULONGKW => { write!(f, "kw::ulong") }
             TokenType::DECIMALKW => { write!(f, "kw::decimal") }
             EOF => { write!(f, "eof") }
+            _ => { write!(f, "unexpected") }
         }
     }
 }
@@ -262,5 +262,10 @@ impl Token {
     }
     pub fn to_string(&self) -> String {
         format!("Token with type [ {:?} ] value [ {} ] pos [ {} ]", self.t_type, self.t_value, self.t_pos)
+    }
+}
+impl Display for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Token with type [ {:?} ] value [ {} ] pos [ {} ]", self.t_type, self.t_value, self.t_pos)
     }
 }

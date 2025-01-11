@@ -13,10 +13,10 @@ impl StringBuilder {
         self.buffer.push(c)
     }
     pub fn push_str(&mut self, s: &str) {
-        self.buffer.append(s.chars().collect())
+        self.buffer.append(&mut s.chars().collect())
     }
     pub fn push_string(&mut self, s: String) {
-        self.buffer.append(s.chars().collect())
+        self.buffer.append(&mut s.chars().collect())
     }
     pub fn pack(self) -> String {
         String::from_iter(self.buffer)

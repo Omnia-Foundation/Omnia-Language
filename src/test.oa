@@ -1,9 +1,18 @@
 plug std::console.println;
 
-static func main(&str[] args) {
+func main() {
     decimal val1 = 12.3;
     decimal val2 = 0.7;
-    println(val1 + val2);
+    decimal added = add(val1, val2);
+    decimal subbed = sub(val1, val2);
+    val1 += 4.0;
+    println(add(added, subbed));
+    println((1 + 2) * 3 + 1);
 }
-
+func add(a: decimal, b: decimal) -> decimal {
+    a + b
+}
+func sub(a: decimal, b: decimal) -> decimal {
+    a - b
+}
 //commentariy yomayo

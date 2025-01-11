@@ -1,28 +1,27 @@
 use std::fmt::Debug;
-use std::fs::File;
+use std::fs::{read_to_string, File};
 use std::io::Read;
 use std::process::exit;
 use crate::core::omnia_types::{OmniaByte, OmniaValue, Type};
 use crate::core::omnia_types::Type::{ANYNUM};
 use crate::lexer::Lexer;
+use crate::parser::Parser;
 
 mod lexer;
 mod parser;
 mod core;
 
-fn main() {
-    // let mut buf = Vec::new();
-    // File::open("src/test.oa").unwrap().read_to_end(&mut buf).expect("Error yomayo");
-    // let mut input = String::new();
-    // buf.iter().for_each(|x| {
-    //     input.push(*x as char)
-    // });
-    //
-    // let mut lexer = Lexer::new(input);
-    // lexer.tokenize().iter().for_each(|x| {
-    //      println!("{}", x.clone().to_string())
-    // })
-    println!("{}", cast::<i16, i8>(2i8) )
+fn main() -> std::io::Result<()> {
+    let mut input = read_to_string("src/test.oa")?;
+
+    let mut lexer = Lexer::new(input);
+    let tokens = lexer.tokenize();
+    tokens.clone().iter().for_each(|x| {
+        println!("{}", x)
+    });
+    let mut parser = Parser::new(tokens);
+    println!("\n\n\n\n--------------------------------\n{}", parser.parse());
+    Ok(())
 }
 fn cast<T, U>(value: U) -> T where T: From<U>, U: Into<T> {
     T::from(value)

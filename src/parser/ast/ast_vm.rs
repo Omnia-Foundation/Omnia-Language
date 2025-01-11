@@ -1,3 +1,4 @@
+use std::fmt::{write, Display, Formatter};
 use num_traits::FromPrimitive;
 use crate::core::omnia_types::{OmniaByte, OmniaChar, OmniaDecimal, OmniaInt, OmniaLong, OmniaSpan, OmniaUByte, OmniaUInt, OmniaULong, OmniaValue, Type};
 use crate::lexer::token::TokenType;
@@ -8,9 +9,17 @@ use crate::parser::ast::ast_vm::UnaryOperation::{Dec, Inc, Neg, Not};
 use crate::parser::CompilerError;
 use crate::parser::CompilerError::TypeError;
 
-pub enum  ASTNode {
+pub enum ASTNode {
     Expression(Expression),
     Statement(Statement)
+}
+impl Display for ASTNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ASTNode::Expression(e) => { write!(f, "{}", e) }
+            ASTNode::Statement(s) => { write!(f, "{}", s) }
+        }
+    }
 }
 
 pub enum BinaryOperation {
@@ -56,21 +65,77 @@ pub enum LiteralExpression {
     Decimal(DecimalNode),
     Char(CharNode)
 }
+impl Display for LiteralExpression {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LiteralExpression::Byte(v) => { write!(f, "Byte literal: {}", v.value.get_as_int32()) }
+            LiteralExpression::Int(v) => { write!(f, "Int literal: {}", v.value.get_as_int32())}
+            LiteralExpression::Long(v) => { write!(f, "Long literal: {}", v.value.get_value_as::<i64>()) }
+            LiteralExpression::UByte(v) => { write!(f, "Unsigned Byte literal: {}", v.value.get_value_as::<u8>()) }
+            LiteralExpression::UInt(v) => { write!(f, "Unsigned Int literal: {}", v.value.get_value_as::<u32>()) }
+            LiteralExpression::ULong(v) => { write!(f, "Unsigned Byte literal: {}", v.value.get_value_as::<u64>()) }
+            LiteralExpression::Decimal(v) => { write!(f, "Decimal literal: {}", v.value.get_as_decimal()) }
+            LiteralExpression::Char(v) => { write!(f, "Char literal: {}", v.value.get_value_as::<char>()) }
+        }
+    }
+}
+
 pub enum Expression {
     Literal(Box<LiteralExpression>),
-    Binary(Box<BinaryOperation>),
+    Binary(Box<BinaryExpressionNode>),
     Unary(Box<UnaryExpressionNode>),
-    VariableAccess(Box<VariableAccessExpressionNode>)
+    FunctionCall(Box<FunctionCallNode>),
+    VariableAccess(Box<VariableAccessExpressionNode>),
+    Argument(Box<ArgumentExpressionNode>)
 }
+impl Display for Expression {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Expression::Literal(v) => { write!(f, "{}", v) }
+            Expression::Binary(v) => { write!(f, "{}", v) }
+            Expression::Unary(v) => { write!(f, "{}", v) }
+            Expression::FunctionCall(v) => { write!(f, "{}", v) }
+            Expression::VariableAccess(v) => { write!(f, "{}", v) }
+            Expression::Argument(v) => { write!(f, "{}", v) }
+        }
+    }
+}
+
 pub enum Statement {
     If(Box<IfStatementNode>),
     Block(Box<BlockStatementNode>),
     Plug(Box<PlugStatementNode>),
-    FunctionCall(Box<FunctionCallStatementNode>),
     FunctionDeclaration(Box<FunctionDeclarationStatementNode>),
+    FunctionCall(Box<FunctionCallNode>),
     Assignment(Box<AssignmentStatementNode>),
     VariableCreation(Box<VariableCreationStatementNode>),
     Return(Box<ReturnStatementNode>)
+}
+impl Display for Statement {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Statement::If(v) => { write!(f, "{}", v) }
+            Statement::Block(v) => { write!(f, "{}", v) }
+            Statement::Plug(v) => { write!(f, "{}", v) }
+            Statement::FunctionDeclaration(v) => { write!(f, "{}", v) }
+            Statement::FunctionCall(v) => { write!(f, "{}", v) }
+            Statement::Assignment(v) => { write!(f, "{}", v) }
+            Statement::VariableCreation(v) => { write!(f, "{}", v) }
+            Statement::Return(v) => { write!(f, "{}", v) }
+        }
+    }
+}
+impl Display for ConditionalOperation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Greater => { write!(f, ">") }
+            Less => { write!(f, "<") }
+            GreaterEq => { write!(f, ">=") }
+            LessEq => { write!(f, "<=") }
+            Eq => { write!(f, "==") }
+            NotEq => { write!(f, "!=") }
+        }
+    }
 }
 impl ConditionalOperation {
     pub fn from_string(string: &str) -> Result<ConditionalOperation, CompilerError> {
@@ -127,7 +192,16 @@ impl ConditionalOperation {
         }
     }
 }
-
+impl Display for UnaryOperation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Inc => { write!(f, "++") }
+            Dec => { write!(f, "--") }
+            Not => { write!(f, "!") }
+            Neg => { write!(f, "-") }
+        }
+    }
+}
 impl UnaryOperation {
     pub fn from_string(string: &str) -> Result<UnaryOperation, CompilerError> {
         match string {
@@ -171,7 +245,17 @@ impl UnaryOperation {
         }
     }
 }
-
+impl Display for BinaryOperation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Add => { write!(f, "+") }
+            Sub => { write!(f, "-") }
+            Mul => { write!(f, "*") }
+            Div => { write!(f, "/") }
+            Rem => { write!(f, "%") }
+        }
+    }
+}
 impl BinaryOperation {
     pub fn from_string(string: &str) -> Result<BinaryOperation, CompilerError> {
         match string {
@@ -230,6 +314,20 @@ pub enum AssignmentOperator {
     REMA,
     ANDA,
     ORA
+}
+impl Display for AssignmentOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ASSIGN => { write!(f, "=") }
+            PLUSA => { write!(f, "+=") }
+            MINUSA => { write!(f, "-=") }
+            MULA => { write!(f, "*=") }
+            DIVA => { write!(f, "/=") }
+            REMA => { write!(f, "%=") }
+            ANDA => { write!(f, "&=") }
+            ORA => { write!(f, "|=") }
+        }
+    }
 }
 impl AssignmentOperator {
     pub fn from_string(string: &str) -> Result<AssignmentOperator, CompilerError> {
@@ -332,13 +430,37 @@ pub struct BinaryExpressionNode {
     op: BinaryOperation,
     right: Expression
 }
+impl BinaryExpressionNode {
+    pub fn new(left: Expression, op: BinaryOperation, right: Expression) -> BinaryExpressionNode {
+        Self {
+            left,
+            op,
+            right
+        }
+    }
+}
+impl Display for BinaryExpressionNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "BinaryExpression({}, {}, {})", self.left, self.op, self.right)
+    }
+}
 pub struct UnaryExpressionNode {
     value: Expression,
     op: UnaryOperation
 }
+impl Display for UnaryExpressionNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "UnaryExpression({}, {})", self.value, self.op)
+    }
+}
 
 pub struct VariableAccessExpressionNode {
     name: String
+}
+impl Display for VariableAccessExpressionNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "VariableAccess({})", self.name)
+    }
 }
 impl VariableAccessExpressionNode {
     pub fn new(name: String) -> Self {
@@ -347,26 +469,108 @@ impl VariableAccessExpressionNode {
         }
     }
 }
+pub struct ArgumentExpressionNode {
+    name: String,
+    r#type: Type
+}
+
+impl Display for ArgumentExpressionNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Argument({}, {})", self.name, self.r#type)
+    }
+}
+impl ArgumentExpressionNode {
+    pub fn new(name: String, r#type: Type) -> Self {
+        Self {
+            name,
+            r#type
+        }
+    }
+}
 
 pub struct AssignmentStatementNode {
-    cont: Expression,
+    cont: String,
     op: AssignmentOperator,
     value: Expression
 }
-pub struct FunctionCallStatementNode {
+impl AssignmentStatementNode {
+    pub fn new(cont: String, op: AssignmentOperator, value: Expression) -> Self {
+        Self {
+            cont,
+            op,
+            value
+        }
+    }
+}
+impl Display for AssignmentStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Assignment({} {} {})", self.cont, self.op, self.value)
+    }
+}
+pub struct FunctionCallNode {
     name: String,
     args: Option<Vec<ASTNode>>
 }
+impl FunctionCallNode {
+    pub fn new(name: String, args: Option<Vec<ASTNode>>) -> Self {
+        Self {
+            name,
+            args
+        }
+    }
+}
+impl Display for FunctionCallNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if let Some(v) = &self.args {
+            write!(f, "FunctionCall({}, [", self.name)?;
+            for (i, val) in v.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                write!(f, "{}", val)?;
+            }
+            write!(f, "]")
+        }
+        else {
+            write!(f, "FunctionCall({})", self.name)
+        }
+    }
+}
 pub struct FunctionDeclarationStatementNode {
     name: String,
-    args: Vec<Statement>,
+    args: Vec<Expression>,
+    returns: Type,
     body: Statement
+}
+
+impl FunctionDeclarationStatementNode {
+    pub fn new(name: String, args: Vec<Expression>, returns: Type, body: Statement) -> Self {
+        Self {
+            name,
+            args,
+            returns,
+            body
+        }
+    }
+}
+impl Display for FunctionDeclarationStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "FunctionDeclaration({}, [", self.name)?;
+        for (i, val) in self.args.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", val)?;
+        }
+        write!(f, "], {}, {})", self.returns, self.body)
+    }
 }
 pub struct VariableCreationStatementNode {
     name: String,
     r#type: Type,
     value: Expression
 }
+
 impl VariableCreationStatementNode {
     pub fn new(name: String, r#type: Type, value: Expression) -> VariableCreationStatementNode {
         Self {
@@ -374,6 +578,11 @@ impl VariableCreationStatementNode {
             r#type,
             value
         }
+    }
+}
+impl Display for VariableCreationStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "VariableCreation({}, {}, {})", self.name, self.r#type, self.value)
     }
 }
 
@@ -387,6 +596,11 @@ impl ReturnStatementNode {
         }
     }
 }
+impl Display for ReturnStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Return({})", self.value)
+    }
+}
 
 pub struct PlugStatementNode {
     lib: String
@@ -398,10 +612,22 @@ impl PlugStatementNode {
         }
     }
 }
+impl Display for PlugStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Plug({})", self.lib)
+    }
+}
 pub struct IfStatementNode {
+    left: Expression,
     cond: ConditionalOperation,
+    right: Expression,
     then: Statement,
     r#else: Statement
+}
+impl Display for IfStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "If({}, {}, {}, {}, {})", self.cond, self.left, self.right, self.then, self.r#else )
+    }
 }
 pub struct BlockStatementNode {
     body: Vec<ASTNode>
@@ -416,6 +642,18 @@ impl BlockStatementNode {
         self.body.push(node)
     }
 }
+impl Display for BlockStatementNode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "BlockStatement(\n")?;
+        for (i, val) in self.body.iter().enumerate() {
+            if i > 0 {
+                write!(f, "\n")?;
+            }
+            write!(f, "{}", val)?;
+        }
+        write!(f, ")")
+    }
+}
 
 
 
@@ -423,63 +661,63 @@ impl BlockStatementNode {
 impl IntNode {
     pub fn new(value: i32) -> IntNode {
         Self {
-            value: OmniaInt::get_from(value)
+            value: OmniaInt::new(value)
         }
     }
 }
 impl ByteNode {
     pub fn new(value: i8) -> Self {
         Self {
-            value: OmniaByte::get_from(value)
+            value: OmniaByte::new(value)
         }
     }
 }
 impl LongNode {
     pub fn new(value: i64) -> Self {
         Self {
-            value: OmniaLong::get_from(value)
+            value: OmniaLong::new(value)
         }
     }
 }
 impl DecimalNode {
     pub fn new(value: f64) -> Self {
         Self {
-            value: OmniaDecimal::get_from(value)
+            value: OmniaDecimal::new(value)
         }
     }
 }
 impl UByteNode {
     pub fn new(value: u8) -> Self {
         Self {
-            value: OmniaUByte::get_from(value)
+            value: OmniaUByte::new(value)
         }
     }
 }
 impl UIntNode {
     pub fn new(value: u32) -> Self {
         Self {
-            value: OmniaUInt::get_from(value)
+            value: OmniaUInt::new(value)
         }
     }
 }
 impl ULongNode {
     pub fn new(value: u64) -> Self {
         Self {
-            value: OmniaULong::get_from(value)
+            value: OmniaULong::new(value)
         }
     }
 }
 impl CharNode {
     pub fn new(value: char) -> Self {
         Self {
-            value: OmniaChar::get_from(value)
+            value: OmniaChar::new(value)
         }
     }
 }
 impl <T: FromPrimitive + Clone> SpanNode<T> {
     pub fn new(value: Vec<T>) -> Self {
         Self {
-            value: OmniaSpan::get_from(value)
+            value: OmniaSpan::new(value)
         }
     }
 }

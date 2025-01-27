@@ -10,6 +10,7 @@ use crate::parser::Parser;
 mod lexer;
 mod parser;
 mod core;
+mod generator;
 
 fn main() -> std::io::Result<()> {
     let mut input = read_to_string("src/test.oa")?;
@@ -21,11 +22,15 @@ fn main() -> std::io::Result<()> {
     });
     let mut parser = Parser::new(tokens);
     println!("\n\n\n\n--------------------------------\n{}", parser.parse());
+
     Ok(())
 }
-fn cast<T, U>(value: U) -> T where T: From<U>, U: Into<T> {
-    T::from(value)
-}
+// fn cast<T, U>(value: U) -> T where T: From<U>, U: Into<T> {
+//     T::from(value)
+// }
+
+
+
 // tt(&OmniaByte::get_from(9), &OmniaByte::get_from(2)).get_as_int32(), OmniaByte::get_from(8).get_value_as::<i128>()
 // fn tt(a: &dyn OmniaValue, b: &dyn OmniaValue) -> Box<dyn OmniaValue> {
 //     let binding = a.get_type();

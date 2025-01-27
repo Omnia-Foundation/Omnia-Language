@@ -7,3 +7,5 @@ edition = "2021"
 rustring_builder = "0.2.0"
 num-traits = "0.2.19"
 downcast-rs = "2.0.1"
+num-bigfloat = "1.7.1"
+phf = { version = "0.11.3", features = ["macros"]}

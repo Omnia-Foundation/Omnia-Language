@@ -11,7 +11,7 @@
 use std::collections::HashMap;
 use rustring_builder::StringBuilder;
 use crate::lexer::token::{Token, TokenType};
-use crate::lexer::token::TokenType::{ACCESS, ALLOWS, AMPERSAND, AND, ANDASSIGN, ANYKW, ARROW, ASSIGN, BYTEKW, COLON, COMMA, DEC, DECIMAL, DECIMALKW, DISRUPT, DIVASSIGN, DOLLAR, ELSE, EOF, EQ, EXPORT, EXT, FEQ, FOR, FUNC, GEQ, GT, HIDDEN, IDENT, IF, INC, INT, INTKW, LAMBDA, LBRACE, LBRACK, LEQ, LONGKW, LPAREN, LS, MINUS, MINUSASSIGN, MK, MULASSIGN, NEQ, NOT, NULLKW, OPEN, OR, ORASSIGN, OVERRIDE, PERIOD, PLUG, PLUS, PLUSASSIGN, POWER, QUESTION, RBRACE, RBRACK, REM, REMASSIGN, REQUIRES, RETURN, RPAREN, SEMICOLON, SKIP, SLASH, STAR, STATIC, STRUCT, SWITCH, UBYTEKW, UINTKW, ULONGKW, UNDERSCORE, VISIBLE, WAITS};
+use crate::lexer::token::TokenType::{ACCESS, ALLOWS, AMPERSAND, AND, ANDASSIGN, ANYKW, ARROW, ASSIGN, BYTEKW, CHARARR, CHARARRKW, CHARKW, COLON, COMMA, DEC, DECIMAL, DECIMALKW, DISRUPT, DIVASSIGN, DOLLAR, ELSE, EOF, EQ, EXPORT, EXT, FEQ, FOR, FUNC, GEQ, GT, HIDDEN, IDENT, IF, INC, INT, INTKW, LAMBDA, LBRACE, LBRACK, LEQ, LONGKW, LPAREN, LS, MINUS, MINUSASSIGN, MK, MULASSIGN, NEQ, NOT, NULLKW, OMNIKW, OPEN, OR, ORASSIGN, OVERRIDE, PERIOD, PIPE, PLUG, PLUS, PLUSASSIGN, POWER, QUESTION, RBRACE, RBRACK, REM, REMASSIGN, REQUIRES, RETURN, RPAREN, SEMICOLON, SHL, SHR, SKIP, SLASH, STAR, STATIC, STRUCT, SWITCH, UBYTEKW, UINTKW, ULONGKW, UNDERSCORE, VISIBLE, WAITS, XOR};
 pub mod token;
 #[derive(Clone)]
 pub struct Lexer {
@@ -67,6 +67,9 @@ impl Lexer {
                 (String::from("long"), LONGKW),
                 (String::from("ulong"), ULONGKW),
                 (String::from("decimal"), DECIMALKW),
+                (String::from("omni"), OMNIKW),
+                (String::from("char"), CHARKW),
+                (String::from("char[]"), CHARARRKW),
                 (String::from("static"), STATIC)
             ])
         }
@@ -81,6 +84,15 @@ impl Lexer {
                 else { self.push_token(STAR) } self.next() }
                 '/' => { if self.peek(1) == '/' { while self.l_cur != '\n' { self.next() } }
                 else if self.peek(1) == '=' { self.push_token(DIVASSIGN); self.next() }
+                else if self.peek(1) == '*' {
+                    loop {
+                        if self.l_cur == '*' && self.peek(1) == '/' {
+                            self.next();
+                            self.next();
+                            break
+                        }
+                        self.next()
+                    } }
                 else { self.push_token(SLASH); } self.next(); }
                 '+' => { if self.peek(1) == '+' { self.push_token(INC); self.next(); }
                 else if self.peek(1) == '=' { self.push_token(PLUSASSIGN); self.next() }
@@ -91,14 +103,19 @@ impl Lexer {
                 else { self.push_token(MINUS) }; self.next() }
                 '|' => { if self.peek(1) == '|' { self.push_token(OR); self.next() }
                 else if self.peek(1) == '=' { self.push_token(ORASSIGN); self.next() }
-                else { panic!("Requires one another | after existing") } ; self.next() }
-                '<' => { if self.peek(1) == '=' { self.push_token(LEQ); self.next() } else { self.push_token(LS) }; self.next() }
+                else if self.peek(1) == '>' { self.push_token(SHR); self.next() }
+                else { self.push_token(PIPE) } ; self.next() }
+                '<' => { if self.peek(1) == '=' { self.push_token(LEQ); self.next() }
+                else if self.peek(1) == '|' { self.push_token(SHL); self.next() }
+                else { self.push_token(LS) }; self.next() }
                 '>' => { if self.peek(1) == '=' { self.push_token(GEQ); self.next() }
                 else if self.peek(1) == '>' { self.push_token(LAMBDA); self.next() }
                 else { self.push_token(GT) }; self.next() }
                 '=' => { if self.peek(1) == '=' { self.push_token(EQ); self.next() }
                 else if self.peek(1) == '!' { self.push_token(FEQ); self.next() }
                 else { self.push_token(ASSIGN) } self.next() }
+                '\'' => { self.next(); self.l_output.push(Token::new(TokenType::CHAR, String::from(self.l_cur), self.l_pos)); self.next(); }
+                '"' => { self.tokenize_chararr() }
                 '!' => { if self.peek(1) == '=' { self.push_token(NEQ); self.next() } else { self.push_token(NOT) }; self.next() }
                 '%' => { if self.peek(1) == '=' { self.push_token(REMASSIGN); self.next() } else { self.push_token(REM); } self.next()  }
                 ':' => { if self.peek(1) == ':' { self.push_token(ACCESS); self.next() } else { self.push_token(COLON) }; self.next() }
@@ -115,6 +132,7 @@ impl Lexer {
                 '}' => { self.push_token(RBRACE); self.next() }
                 ';' => { self.push_token(SEMICOLON); self.next() }
                 '?' => { self.push_token(QUESTION); self.next() }
+                '~' => { self.push_token(XOR); self.next() }
                 '\0' => { self.push_token(EOF); break }
                 _ => {
                     if self.l_cur.is_whitespace() { self.next() }
@@ -133,9 +151,25 @@ impl Lexer {
         }
         output
     }
+    fn tokenize_chararr(&mut self) {
+        self.l_buffer.clear();
+        self.next();
+        while self.l_cur != '"' {
+            self.l_buffer.push(self.l_cur);
+            self.next()
+        }
+        self.next();
+        let value = self.l_buffer.to_string();
+        self.l_output.push(Token::new(CHARARR, value, self.l_pos))
+
+    }
     fn tokenize_ident(&mut self) {
         self.l_buffer.clear();
-        while self.l_cur.is_alphabetic() || self.l_cur == '_' || self.l_cur.is_digit(10) {
+        while self.l_cur.is_alphabetic()
+            || self.l_cur == '_'
+            || self.l_cur.is_digit(10)
+            || self.l_cur == '['
+            || self.l_cur == ']' {
             self.l_buffer.push(self.l_cur);
             self.next()
         }
@@ -211,6 +245,10 @@ impl Lexer {
             COLON => String::from(":"),
             QUESTION => String::from("?"),
             UNDERSCORE => String::from("_"),
+            XOR => String::from("~"),
+            PIPE => String::from("|"),
+            SHL => String::from("<|"),
+            SHR => String::from("|>"),
             _ => panic!("Unexpected/unsupported token type {:?}", t)
         };
         self.l_output.push(Token::new(t, val, self.l_pos))

@@ -7,17 +7,19 @@ use std::io::Error;
 use std::sync::Arc;
 use downcast_rs::impl_downcast;
 use num_traits::{AsPrimitive, FromPrimitive};
-use crate::core::omnia_types::Type::{ANYNUM, BOOL, BYTE, CHAR, DECIMAL, INT, LONG, NULL, OTHER, STRING, STRLIKE, UBYTE, UINT, ULONG};
+use crate::core::omnia_types::Type::{ANYNUM, BOOL, BYTE, CHAR, CHARARR, DECIMAL, INT, LONG, NULL, OMNI, OTHER, STRLIKE, UBYTE, UINT, ULONG};
+use crate::core::utils::numeric_utils::omni::f128;
 use crate::lexer::token::TokenType;
 use crate::lexer::token::TokenType::DECIMALKW;
 use crate::parser::CompilerError;
 use crate::parser::CompilerError::TypeError;
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Eq, Hash)]
 pub enum Type {
     DECIMAL,
+    OMNI,
     CHAR,
-    STRING,
+    CHARARR,
     BOOL,
 
     BYTE,
@@ -38,6 +40,7 @@ impl Type {
     pub fn from_token_type(t: &TokenType) -> Result<Type, CompilerError> {
         match t {
             &DECIMALKW => Ok(DECIMAL),
+            &TokenType::OMNIKW => Ok(OMNI),
             &TokenType::CHARKW => Ok(CHAR),
             &TokenType::BOOLKW => Ok(BOOL),
             &TokenType::BYTEKW => Ok(BYTE),
@@ -47,6 +50,7 @@ impl Type {
             &TokenType::LONGKW => Ok(LONG),
             &TokenType::ULONGKW => Ok(ULONG),
             &TokenType::NULLKW => Ok(NULL),
+            &TokenType::CHARARRKW => Ok(CHARARR),
             _ => Err(TypeError(String::from("Unexpected token type for type")))
         }
     }
@@ -55,7 +59,9 @@ impl Display for Type {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             DECIMAL => {  write!(f, "decimal")  }
+            OMNI => { write!(f, "omni") }
             CHAR => { write!(f, "char") }
+            CHARARR => { write!(f, "char[]") }
             BOOL => { write!(f, "bool") }
             BYTE => { write!(f, "byte") }
             UBYTE => { write!(f, "ubyte") }
@@ -147,6 +153,22 @@ impl OmniaValue for OmniaDecimal {
 
 }
 
+pub struct OmniaOmni {
+    value: f128
+}
+
+
+impl OmniaOmni {
+    pub fn new(value: f128) -> Self {
+        Self {
+            value
+        }
+    }
+    pub fn get_value_as<T: From<f128>>(&self) -> T {
+        T::from(self.value.clone())
+    }
+}
+
 //SECTION::Floats end
 
 //SECTION::Char start
@@ -198,11 +220,11 @@ impl OmniaValue for OmniaChar {
 //SECTION::String start
 
 #[derive(Clone)]
-pub struct OmniaString {
+pub struct OmniaChararr {
     value: String
 }
-impl OmniaString {
-    fn new(value: String) -> OmniaString {
+impl OmniaChararr {
+    pub fn new(value: String) -> OmniaChararr {
         Self {
             value
         }
@@ -211,12 +233,15 @@ impl OmniaString {
         // println!("{:?}", type_name::<T>());
         T::from(self.value.clone())
     }
+    pub fn get_from<T>(value: T) -> OmniaChararr where T: Into<String> {
+        OmniaChararr::new(value.into())
+    }
 
     // pub(crate) fn get_from<T>(value: T) -> OmniaString where T : TryInto<String> + PartialOrd, <T as TryInto<String>>::Error: Debug {
     //     OmniaString::new(value.try_into().expect("Given value is not a string"))
     // }
 }
-impl OmniaValue for OmniaString {
+impl OmniaValue for OmniaChararr {
 
     fn get_as_int32(&self) -> i32 {
         let mut hasher = DefaultHasher::new();
@@ -232,7 +257,7 @@ impl OmniaValue for OmniaString {
         hasher.finish() as f64
     }
     fn get_type(&self) -> Pair<Type, Type> {
-        Pair::new(STRLIKE, STRING)
+        Pair::new(STRLIKE, CHARARR)
 
     }
 

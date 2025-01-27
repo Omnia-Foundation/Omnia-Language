@@ -4,10 +4,13 @@ use std::collections::VecDeque;
 use std::process::exit;
 use crate::core::omnia_types::Type;
 use crate::core::omnia_types::Type::NULL;
+use crate::core::utils::numeric_utils::omni::f128;
 use crate::core::utils::stringutils::StringBuilder;
 use crate::lexer::token::{Token, TokenType};
-use crate::lexer::token::TokenType::{ANDASSIGN, ARROW, ASSIGN, BOOL, BOOLKW, BYTE, BYTEKW, CHAR, CHARKW, COLON, COMMA, DECIMAL, DECIMALKW, DIVASSIGN, EOF, FUNC, IDENT, IF, INT, INTKW, LBRACE, LONG, LONGKW, LPAREN, MINUS, MINUSASSIGN, MULASSIGN, NULLKW, ORASSIGN, PLUG, PLUS, PLUSASSIGN, RBRACE, REMASSIGN, RETURN, RPAREN, SEMICOLON, SLASH, STAR, UBYTE, UBYTEKW, UINT, UINTKW, ULONG, ULONGKW};
-use crate::parser::ast::ast_vm::{ASTNode, ArgumentExpressionNode, AssignmentOperator, AssignmentStatementNode, BinaryExpressionNode, BinaryOperation, BlockStatementNode, ByteNode, CharNode, DecimalNode, Expression, FunctionCallNode, FunctionDeclarationStatementNode, IntNode, LiteralExpression, LongNode, PlugStatementNode, ReturnStatementNode, Statement, UByteNode, UIntNode, ULongNode, VariableAccessExpressionNode, VariableCreationStatementNode};
+use crate::lexer::token::TokenType::{AMPERSAND, AND, ANDASSIGN, ARROW, ASSIGN, BOOL, BOOLKW, BYTE, BYTEKW, CHAR, CHARARR, CHARKW, COLON, COMMA, DEC, DECIMAL, DECIMALKW, DIVASSIGN, ELSE, EOF, EQ, EXT, FUNC, GEQ, GT, IDENT, IF, INC, INT, INTKW, LAMBDA, LBRACE, LEQ, LONG, LONGKW, LPAREN, LS, MINUS, MINUSASSIGN, MK, MULASSIGN, NEQ, NULLKW, OMNI, OMNIKW, OR, ORASSIGN, PIPE, PLUG, PLUS, PLUSASSIGN, POWER, RBRACE, REM, REMASSIGN, RETURN, RPAREN, SEMICOLON, SHL, SHR, SLASH, STAR, STRUCT, UBYTE, UBYTEKW, UINT, UINTKW, ULONG, ULONGKW, VISIBLE, XOR};
+use crate::parser::ast::nodes;
+use crate::parser::ast::nodes::{ASTNode, ArgumentExpressionNode, AssignmentOperator, AssignmentStatementNode, BinaryExpressionNode, BinaryOperation, BitwiseExpressionNode, BitwiseOperation, BlockStatementNode, ByteNode, CharArrNode, CharNode, ComparativeExpressionNode, ConditionalOperation, DecimalNode, Expression, FieldExpressionNode, FunctionCallNode, FunctionDeclarationStatementNode, IfStatementNode, IntNode, LambdaDeclarationStatementNode, LiteralExpression, LogicalExpressionNode, LogicalOperation, LongNode, OmniNode, PlugStatementNode, ReturnStatementNode, Statement, StructDeclarationStatementNode, UByteNode, UIntNode, ULongNode, UnaryExpressionNode, UnaryOperation, VariableAccessExpressionNode, VariableCreationStatementNode};
+
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -48,10 +51,30 @@ impl Parser {
             || self.r#match(&LONGKW)
             || self.r#match(&ULONGKW)
             || self.r#match(&CHARKW)
-            || self.r#match(&BOOLKW) {
+            || self.r#match(&BOOLKW)
+            || self.r#match(&MK) {
             let statement = self.variable_creation_statement();
             self.require(&SEMICOLON);
             return statement
+        }
+        if self.r#match(&VISIBLE) {
+            if self.r#match(&FUNC) {
+                return self.function_declaration_statement(true)
+            }
+            if self.r#match(&STRUCT) {
+                return self.struct_declaration_statement(true)
+            }
+            // if self.r#match(&EXT) {
+            //     if self.r#match(&FUNC) {
+            //
+            //     }
+            //     else {
+            //         panic!("OmniaParser error:: keyword `visible` is not applicable for using with struct extension blocks (\"raw\" `ext`, with `ext func` all is ok!)")
+            //     }
+            // }
+            else {
+                panic!("OmniaParser error:: you can use `visible` keyword only before structs, functions or ext functions declarations")
+            }
         }
         if self.r#match(&RETURN) {
             let statement = self.return_statement();
@@ -64,14 +87,17 @@ impl Parser {
         if self.r#match(&LBRACE) {
             return self.block()
         }
-        // if self.r#match(&IF) {
-        //     return self.if_statement()           //TODO!
-        // }
+        if self.r#match(&IF) {
+            return self.if_statement()
+        }
         if self.r#match(&FUNC) {
-            return self.function_declaration_statement()
+            return self.function_declaration_statement(false)
         }
         if self.r#match(&IDENT) {
-            self.call_or_return_or_assignment()
+            return self.call_or_return_or_assignment()
+        }
+        if self.r#match(&STRUCT) {
+            self.struct_declaration_statement(false)
         }
         else {
             panic!("Unexpected token or use of an expression as a command [{}] at pos {}", self.buffer.pop().unwrap().t_type, self.pos)
@@ -89,6 +115,35 @@ impl Parser {
             statements.add_node(ASTNode::Statement(self.statement()))
         }
         Statement::Block(Box::from(statements))
+    }
+
+    fn struct_declaration_statement(&mut self, is_visible: bool) -> Statement {
+        let name = self.require(&IDENT).t_value.clone();
+        let mut fields: Vec<FieldExpressionNode> = Vec::new();
+        self.require(&LBRACE);
+        loop {
+            if self.r#match(&RBRACE) {
+                break
+            }
+            let field_name = self.require(&IDENT).t_value.clone();
+            self.require(&COLON);
+            let r#type = Type::from_token_type(&self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, CHARKW, LONGKW, ULONGKW, DECIMALKW, OMNIKW]).t_type).unwrap();
+            fields.push(FieldExpressionNode::new(field_name, r#type));
+            if self.r#match(&RBRACE) {
+                break
+            }
+            self.require(&COMMA);
+        }
+        Statement::StructDeclaration(Box::from(StructDeclarationStatementNode::new(name, fields, is_visible)))
+    }
+    fn if_statement(&mut self) -> Statement {
+        let condition = self.expression();
+        let then = self.statement();
+        if self.r#match(&ELSE) {
+            let r#else = self.statement();
+            return Statement::If(Box::from(IfStatementNode::new(condition, then, Some(r#else))))
+        }
+        Statement::If(Box::from(IfStatementNode::new(condition, then, None)))
     }
     fn call_or_return_or_assignment(&mut self) -> Statement {
         let buffered = self.buffer.pop().unwrap();
@@ -112,7 +167,11 @@ impl Parser {
                 self.require(&COMMA);
 
             }
-            self.require(&SEMICOLON);
+            if !self.r#match(&RBRACE) {
+                self.require(&SEMICOLON);
+            } else {
+                self.pos -= 1;
+            }
             return Statement::FunctionCall(Box::from(FunctionCallNode::new(name, Some(args))))
         }
         if self.match_any(vec![ASSIGN, PLUSASSIGN, MINUSASSIGN, MULASSIGN, DIVASSIGN, REMASSIGN, ANDASSIGN, ORASSIGN]) {
@@ -127,17 +186,17 @@ impl Parser {
         let expr = self.expression();
         Statement::Return(Box::from(ReturnStatementNode::new(ASTNode::Expression(expr))))
     }
-    fn function_declaration_statement(&mut self) -> Statement {
+    fn function_declaration_statement(&mut self, is_visible: bool) -> Statement {
         let mut name = self.require(&IDENT);
         self.require(&LPAREN);
         let args = self.arguments();
         if self.r#match(&ARROW) {  // returns type
-            let ret_type = self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, LONGKW, ULONGKW, DECIMALKW, CHARKW, BOOLKW, NULLKW]);
+            let ret_type = self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, LONGKW, ULONGKW, DECIMALKW, OMNIKW, CHARKW, BOOLKW, NULLKW]);
             let body = self.statement();
-            Statement::FunctionDeclaration(Box::from(FunctionDeclarationStatementNode::new(name.t_value, args, Type::from_token_type(&ret_type.t_type).unwrap(), body)))
+            Statement::FunctionDeclaration(Box::from(FunctionDeclarationStatementNode::new(name.t_value, args, Type::from_token_type(&ret_type.t_type).unwrap(), body, is_visible)))
         } else {
             let body = self.statement();
-            Statement::FunctionDeclaration(Box::from(FunctionDeclarationStatementNode::new(name.t_value, args, NULL, body)))
+            Statement::FunctionDeclaration(Box::from(FunctionDeclarationStatementNode::new(name.t_value, args, NULL, body, is_visible)))
         }
 
     }
@@ -149,7 +208,7 @@ impl Parser {
             }
             let name = self.require(&IDENT).t_value.clone();
             self.require(&COLON);
-            let r#type = self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, LONGKW, ULONGKW, DECIMALKW, CHARKW, BOOLKW]);
+            let r#type = self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, LONGKW, ULONGKW, DECIMALKW, OMNIKW, CHARKW, BOOLKW]);
             args.push(Expression::Argument(Box::from(ArgumentExpressionNode::new(name, Type::from_token_type(&r#type.t_type).unwrap()))));
             if self.r#match(&RPAREN) {
                 break
@@ -164,6 +223,31 @@ impl Parser {
         let r#type = &buffered.unwrap().t_type;
         let name = self.require(&IDENT);
         self.require(&ASSIGN);
+        if self.r#match(&LPAREN) {
+            if r#type != &MK {
+                panic!("OmniaParser error:: cannot declare a lambda in a variable with specified type")
+            }
+            let mut args: Vec<Expression> = Vec::new();
+            loop {
+                if self.r#match(&RPAREN) {
+                    break
+                }
+                let name = self.require(&IDENT).t_value.clone();
+                self.require(&COLON);
+                let r#type = self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, LONGKW, ULONGKW, DECIMALKW, OMNIKW, CHARKW, BOOLKW]);
+                args.push(Expression::Argument(Box::from(ArgumentExpressionNode::new(name, Type::from_token_type(&r#type.t_type).unwrap()))));
+                if self.r#match(&RPAREN) {
+                    break
+                }
+                self.require(&COMMA);
+
+            }
+            self.require(&ARROW);
+            let r_type = self.require_any(vec![BYTEKW, UBYTEKW, INTKW, UINTKW, LONGKW, ULONGKW, DECIMALKW, OMNIKW, CHARKW, BOOLKW]);
+            self.require(&LAMBDA);
+            let body = self.statement();
+            return  Statement::LambdaDeclaration(Box::from(LambdaDeclarationStatementNode::new(name.t_value, args, Type::from_token_type(&r_type.t_type).unwrap(), body)))
+        }
         let value = self.expression();
         Statement::VariableCreation(Box::from(VariableCreationStatementNode::new(name.t_value, Type::from_token_type(r#type).expect("Unexpected token type"), value)))
     }
@@ -188,8 +272,52 @@ impl Parser {
 
     }
     fn expression(&mut self) -> Expression {
-        self.additive()
+        self.bitwise()
     }
+
+    fn bitwise(&mut self) -> Expression {
+        let mut left = self.logical();
+        loop {
+            self.buffer.push(self.get_cur());
+            if self.match_any(vec![AMPERSAND, PIPE, XOR, SHL, SHR]) {
+                let oper = BitwiseOperation::from_token_type(&self.buffer.pop().unwrap().t_type).unwrap();
+                let right = self.logical();
+                left = Expression::Bitwise(Box::from(BitwiseExpressionNode::new(left, oper, right)))
+            }
+            self.buffer.pop();
+            break
+        }
+        left
+    }
+    fn logical(&mut self) -> Expression {
+        let mut left = self.comparative();
+        loop {
+            self.buffer.push(self.get_cur());
+            if self.r#match(&AND) || self.r#match(&OR) {
+                let oper = LogicalOperation::from_token_type(&self.buffer.pop().unwrap().t_type).unwrap();
+                let right = self.comparative();
+                left = Expression::Logical(Box::from(LogicalExpressionNode::new(left, oper, right)))
+            }
+            self.buffer.pop();
+            break
+        }
+        left
+    }
+    fn comparative(&mut self) -> Expression {
+        let mut left = self.additive();
+        loop {
+            self.buffer.push(self.get_cur());
+            if self.match_any(vec![GT, LS, EQ, LEQ, GEQ, NEQ]) {
+                let oper = ConditionalOperation::from_token_type(&self.buffer.pop().unwrap().t_type).unwrap();
+                let right = self.additive();
+                left = Expression::Comparative(Box::from(ComparativeExpressionNode::new(left, oper, right)))
+            }
+            self.buffer.pop();
+            break
+        }
+        left
+    }
+
     fn additive(&mut self) -> Expression {
         let mut left = self.multiplicative();
         loop {
@@ -205,12 +333,12 @@ impl Parser {
         left
     }
     fn multiplicative(&mut self) -> Expression {
-        let mut left = self.primary();
+        let mut left = self.exponential();
         loop {
             self.buffer.push(self.get_cur());
-            if self.r#match(&STAR) || self.r#match(&SLASH) {
+            if self.r#match(&STAR) || self.r#match(&SLASH) ||self.r#match(&REM) {
                 let oper = BinaryOperation::from_token_type(&self.buffer.pop().unwrap().t_type).unwrap();
-                let right = self.primary();
+                let right = self.exponential();
                 left = Expression::Binary(Box::from(BinaryExpressionNode::new(left, oper, right)))
             }
             self.buffer.pop();
@@ -218,11 +346,44 @@ impl Parser {
         }
         left
     }
+
+    fn exponential(&mut self) -> Expression {
+        let mut left = self.unary();
+        loop {
+            self.buffer.push(self.get_cur());
+            if self.r#match(&POWER) {
+                let right = self.unary();
+                left = Expression::Binary(Box::from(BinaryExpressionNode::new(left, BinaryOperation::Power, right)))
+            }
+            self.buffer.pop();
+            break
+        }
+        left
+    }
+
+    fn unary(&mut self) -> Expression {
+        let mut left = self.primary();
+        loop {
+            self.buffer.push(self.get_cur());
+            if self.r#match(&INC) || self.r#match(&DEC) {
+                let oper = UnaryOperation::from_token_type(&self.buffer.pop().unwrap().t_type).unwrap();
+                left = Expression::Unary(Box::from(UnaryExpressionNode::new(left, oper)))
+            }
+            self.buffer.pop();
+            break
+        }
+        left
+    }
+
     fn primary(&mut self) -> Expression {
         self.buffer.push(self.get_cur());
         if self.r#match(&DECIMAL) {
             let buffered = &self.buffer.pop().unwrap().t_value;
             return Expression::Literal(Box::from(LiteralExpression::Decimal(DecimalNode::new(buffered.parse::<f64>().unwrap()))))
+        }
+        if self.r#match(&OMNI) {
+            let buffered  = &self.buffer.pop().unwrap().t_value;
+            return Expression::Literal(Box::from(LiteralExpression::Omni(OmniNode::new(buffered.parse::<f128>().unwrap()))))
         }
         if self.r#match(&BYTE) {
             let buffered = &self.buffer.pop().unwrap().t_value;
@@ -255,6 +416,10 @@ impl Parser {
                 panic!("char literal [{}] contains more than 1 char!", buffered)
             }
             return Expression::Literal(Box::from(LiteralExpression::Char(CharNode::new(chars.nth(0).unwrap()))))
+        }
+        if self.r#match(&CHARARR) {
+            let buffered = &self.buffer.pop().unwrap().t_value;
+            return Expression::Literal(Box::from(LiteralExpression::Chararr(CharArrNode::new(buffered.clone()))))
         }
         // if self.r#match(&BOOL) {                                                                                                         //not yet implemented
         //     let buffered = &self.buffer.pop().unwrap().t_value;

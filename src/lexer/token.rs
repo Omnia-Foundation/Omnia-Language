@@ -1,8 +1,8 @@
 use std::collections::hash_map::Values;
-use std::fmt::{Display, Formatter};
+use std::fmt::{write, Display, Formatter};
 use std::io::Stderr;
 use std::ops::RangeBounds;
-use crate::lexer::token::TokenType::{ARITHMETIC_E, ARITHMETIC_S, ASSIGNMENT_E, ASSIGNMENT_S, COND_E, COND_S, EOF, KEYWORDS_E, KEYWORDS_S, MINUS, OPERATORS_E, OPERATORS_S, OTHERS_E, OTHERS_S, STDDATATYPES_E, STDDATATYPES_S, UNARY_E, UNARY_S};
+use crate::lexer::token::TokenType::{ARITHMETIC_E, ARITHMETIC_S, ASSIGNMENT_E, ASSIGNMENT_S, BITWISE_E, BITWISE_S, COND_E, COND_S, EOF, KEYWORDS_E, KEYWORDS_S, LOGICAL_E, LOGICAL_S, MINUS, OPERATORS_E, OPERATORS_S, OTHERS_E, OTHERS_S, STDDATATYPES_E, STDDATATYPES_S, UNARY_E, UNARY_S};
 
 #[derive(PartialOrd, PartialEq, Clone, Debug)]
 pub enum TokenType {
@@ -14,8 +14,10 @@ pub enum TokenType {
     MINUS,      // -
     REM,        // %
     ARITHMETIC_E,
+    LOGICAL_S,
     AND,        // &&
     OR,         // ||
+    LOGICAL_E,
     COND_S,
     LS,         // <
     GT,         // >
@@ -35,7 +37,6 @@ pub enum TokenType {
     REMASSIGN,  // %=
     ASSIGNMENT_E,
     UNARY_S,
-    AMPERSAND,  // &
     NOT,        // !
     INC,        // ++
     DEC,        // --
@@ -48,6 +49,14 @@ pub enum TokenType {
     POWER,      // ^
     OPERATORS_E,
 
+    BITWISE_S,
+    AMPERSAND,  // &
+    PIPE,       // |
+    XOR,        // ~
+    SHL,        // <|
+    SHR,        // |>
+    BITWISE_E,
+
     OTHERS_S,
     LPAREN,     // (
     LBRACK,     // [
@@ -55,7 +64,9 @@ pub enum TokenType {
     COMMA,      // ,
     PERIOD,     // .
     UNDERSCORE, // _
+    QUOTA,      // '
 
+    DQUOTA,     // "
     RPAREN,     // )
     RBRACK,     // ]
     RBRACE,     // }
@@ -72,8 +83,9 @@ pub enum TokenType {
     LONG,
     ULONG,
     DECIMAL,
+    OMNI,
     PTR,
-    STRING,
+    CHARARR,
     IDENT,
     CHAR,
     BOOL,
@@ -105,7 +117,7 @@ pub enum TokenType {
     DISRUPT,
     SKIP,
     RETURN,
-    STRINGKW,
+    CHARARRKW,
     CHARKW,
     BOOLKW,
     INTKW,
@@ -115,6 +127,7 @@ pub enum TokenType {
     LONGKW,
     ULONGKW,
     DECIMALKW,
+    OMNIKW,
     KEYWORDS_E,
 
     EOF
@@ -133,6 +146,8 @@ impl TokenType {
     pub fn is_unary_operator(t: &TokenType) -> bool { (UNARY_S..UNARY_E).contains(t) || t == &MINUS }
     pub fn is_conditional_operator(t: &TokenType) -> bool { (COND_S..COND_E).contains(t) }
     pub fn is_assignment_operator(t: &TokenType) -> bool { (ASSIGNMENT_S..ASSIGNMENT_E).contains(t) }
+    pub fn is_bitwise_operator(t: &TokenType) -> bool { (BITWISE_S..BITWISE_E).contains(t) }
+    pub fn is_logical_operator(t: &TokenType) -> bool { (LOGICAL_S..LOGICAL_E).contains(t) }
     pub fn is_eof(t: &TokenType) -> bool {
         &EOF == t
     }
@@ -181,6 +196,8 @@ impl Display for TokenType {
             TokenType::COMMA => { write!(f, ",") }
             TokenType::PERIOD => { write!(f, ".") }
             TokenType::UNDERSCORE => { write!(f, "_") }
+            TokenType::QUOTA => { write!(f, "'") }
+            TokenType::DQUOTA => { write!(f, "\"") }
             TokenType::RPAREN => { write!(f, ")") }
             TokenType::RBRACK => { write!(f, "]") }
             TokenType::RBRACE => { write!(f, "}}") }
@@ -194,9 +211,11 @@ impl Display for TokenType {
             TokenType::LONG => { write!(f, "l::long") }
             TokenType::ULONG => { write!(f, "l::ulong") }
             TokenType::DECIMAL => { write!(f, "l::decimal") }
+            TokenType::OMNI => { write!(f, "l::omni") }
             TokenType::PTR => { write!(f, "l::pointer") }
             TokenType::IDENT => { write!(f, "l::ident") }
             TokenType::CHAR => { write!(f, "l::char") }
+            TokenType::CHARARR => { write!(f, "l::char[]") }
             TokenType::BOOL => { write!(f, "l::bool") }
             TokenType::NULL => { write!(f, "l::null") }
             TokenType::ANY => { write!(f, "l::any") }
@@ -224,6 +243,7 @@ impl Display for TokenType {
             TokenType::SKIP => { write!(f, "kw::skip") }
             TokenType::RETURN => { write!(f, "kw::return") }
             TokenType::CHARKW => { write!(f, "kw::char") }
+            TokenType::CHARARRKW => { write!(f, "kw::char[]") }
             TokenType::BOOLKW => { write!(f, "kw::bool") }
             TokenType::INTKW => { write!(f, "kw::int") }
             TokenType::UINTKW => { write!(f, "kw::uint") }
@@ -232,6 +252,7 @@ impl Display for TokenType {
             TokenType::LONGKW => { write!(f, "kw::long") }
             TokenType::ULONGKW => { write!(f, "kw::ulong") }
             TokenType::DECIMALKW => { write!(f, "kw::decimal") }
+            TokenType::OMNIKW => { write!(f, "kw::omni") }
             EOF => { write!(f, "eof") }
             _ => { write!(f, "unexpected") }
         }
